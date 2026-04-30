@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif-sc: "Noto Serif SC", serif;
+  --font-calligraphy: "Ma Shan Zheng", cursive;
+  --font-brush: "Zhi Mang+Xing", cursive;
+  
+  --color-amber-gold: #a67c52;
+  --color-dark-gold: #5d4a2a;
+  --color-ink-black: #1a1a1c;
+  --color-paper: #f4efdf; /* Warmer, aged paper like the image */
+  --color-imperial-red: #b91c1c; /* Vivid plum red */
+  --color-active-card-bg: #fdfaf3;
+}
+
+@layer base {
+  body {
+    @apply font-serif-sc overflow-x-hidden;
+    background-color: var(--color-paper);
+    color: var(--color-ink-black);
+    /* Multi-layered background for ink-wash texture */
+    background-image: 
+      url('https://www.transparenttextures.com/patterns/handmade-paper.png'),
+      radial-gradient(circle at 90% 10%, rgba(185, 28, 28, 0.03) 0%, transparent 40%),
+      radial-gradient(ellipse at 10% 80%, rgba(26, 26, 28, 0.05) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* Plum Blossom Decorative Element for Background */
+.plum-decoration {
+  position: fixed;
+  pointer-events: none;
+  opacity: 0.15;
+  z-index: 0;
+  filter: blur(1px);
+}
+
+.scroll-surface {
+  background: white;
+  background-image: url('https://www.transparenttextures.com/patterns/handmade-paper.png');
+  border: 1px solid rgba(139, 28, 28, 0.1);
+  box-shadow: 
+    0 20px 60px rgba(0,0,0,0.05), 
+    inset 0 0 100px rgba(244, 239, 223, 0.5);
+  border-radius: 2px;
+}
+
+.brush-accent {
+  @apply font-brush text-ink-black/5 pointer-events-none select-none;
+}
+
+.ink-glow {
+  text-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.4em;
+}
+
+.taoji-pattern {
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.03) 1px, transparent 0);
+  background-size: 32px 32px;
+}
+
+.ink-wash-overlay {
+  background: radial-gradient(circle at center, transparent 0%, rgba(242, 233, 217, 0.5) 100%);
+}
+
+.bagua-ring {
+  border: 1px dashed rgba(0, 0, 0, 0.03);
+  border-radius: 50%;
+  animation: rotate-slow 240s linear infinite;
+}
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
