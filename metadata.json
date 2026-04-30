@@ -1,6 +1,0 @@
-{
-  "name": "天道玄机 (Fate & Divination System)",
-  "description": "A high-end Chinese metaphysics platform offering Bazi (Four Pillars) calculation and I Ching hexagram divination with AI-powered interpretations.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["Bazi Calculation", "I Ching Divination", "AI Metaphysics"]
-}
