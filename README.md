@@ -190,7 +190,7 @@ npm run preview
 
 ## 10. 开源许可协议 (License)
 
-本项目采用 **[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)** (署名-非商业性使用-相同方式共享) 许可协议。
+本项目采用 **[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans)** (署名-非商业性使用-相同方式共享) 许可协议。
 
 *   **必须开源**：基于本项目的任何演绎作品必须以相同的协议开源。
 *   **禁止商用**：严禁将本项目及其衍生版本用于任何商业盈利目的。
