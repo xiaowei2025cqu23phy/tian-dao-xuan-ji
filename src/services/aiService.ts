@@ -2,7 +2,17 @@ import { GoogleGenAI } from "@google/genai";
 import { TEN_STEMS_ANALYSIS } from "../lib/bazi-data";
 import { GET_HEX_BY_BINARY } from "../lib/iching-data";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const getApiKey = (provider: AIProvider, userKey?: string) => {
+  if (userKey) return userKey;
+  
+  // Safe environment variable access for browser
+  const env = (import.meta as any).env || {};
+  
+  if (provider === 'gemini') return env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined);
+  if (provider === 'openai') return env.VITE_OPENAI_API_KEY || (typeof process !== 'undefined' ? process.env.OPENAI_API_KEY : undefined);
+  if (provider === 'deepseek') return env.VITE_DEEPSEEK_API_KEY || (typeof process !== 'undefined' ? process.env.DEEPSEEK_API_KEY : undefined);
+  return undefined;
+};
 
 export type AIProvider = 'gemini' | 'openai' | 'deepseek' | 'qwen' | 'zhipu' | 'custom';
 
@@ -55,14 +65,10 @@ export interface ChatMessage {
 
 async function callOpenAICompatibleAPI(messages: ChatMessage[], config: AIConfig) {
   const { apiKey, baseUrl, model } = config;
-  const usedApiKey = apiKey || (
-    config.provider === 'deepseek' ? process.env.DEEPSEEK_API_KEY :
-    config.provider === 'openai' ? process.env.OPENAI_API_KEY :
-    undefined
-  );
+  const usedApiKey = getApiKey(config.provider, apiKey);
 
   if (!usedApiKey) {
-    throw new Error(`未设置 ${config.provider} API 密钥`);
+    throw new Error(`未设置 ${config.provider} API 密钥。请在侧边中心 [设置] 中配置。`);
   }
 
   const effectiveBaseUrl = baseUrl || 'https://api.openai.com/v1';
@@ -110,13 +116,14 @@ export async function interpretMetaphysics(
 
   // Gemini logic
   try {
-    const geminiKey = config.apiKey || process.env.GEMINI_API_KEY;
-    if (!geminiKey) throw new Error("未设置 Gemini API 密钥");
+    const geminiKey = getApiKey('gemini', config.apiKey);
+    if (!geminiKey) throw new Error("未设置 Gemini API 密钥。请在右上角 [设置] 中配置并保存。");
     
     const genAI = new GoogleGenAI({ apiKey: geminiKey });
     
+    // Note: @google/genai uses this structure
     const response = await genAI.models.generateContent({
-      model: config.model || 'gemini-3-flash-preview',
+      model: config.model || 'gemini-1.5-flash',
       contents: messages.map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }],
@@ -127,9 +134,9 @@ export async function interpretMetaphysics(
     });
 
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Interpretation Error:", error);
-    throw error;
+    throw new Error(error.message || "Gemini 神谕连接失败");
   }
 }
 
