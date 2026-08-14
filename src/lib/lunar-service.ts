@@ -1,14 +1,46 @@
 import { Solar } from 'lunar-javascript';
 
+export interface PillarInfo {
+  stem: string;
+  branch: string;
+  element: string;
+  naYin: string;
+  shiShen: string;
+}
+
+export interface DaYunPeriod {
+  ganZhi: string;
+  startYear: number;
+  endYear: number;
+  startAge: number;
+  endAge: number;
+  isCurrent: boolean;
+}
+
+export interface LiuNianInfo {
+  ganZhi: string;
+  year: number;
+  age: number;
+}
+
+export interface YunInfo {
+  startText: string;       // 起运说明（交运日期）
+  forward: boolean;        // 顺排 / 逆排
+  periods: DaYunPeriod[];  // 八步大运（不含起运前段）
+  liuNian: LiuNianInfo[];  // 当前大运的流年
+}
+
 export interface BaziData {
-  year: { stem: string; branch: string; element: string };
-  month: { stem: string; branch: string; element: string };
-  day: { stem: string; branch: string; element: string };
-  hour: { stem: string; branch: string; element: string };
+  year: PillarInfo;
+  month: PillarInfo;
+  day: PillarInfo;
+  hour: PillarInfo;
   fiveElements: Record<string, number>;
   dayMaster: string;
   dayMasterElement: string;
   dayMasterAnalysis: string;
+  shengXiao: string;
+  missingElements: string[];
   monthCommand: {
     branch: string;
     element: string;
@@ -19,6 +51,7 @@ export interface BaziData {
     name: string;
     description: string;
   };
+  yun?: YunInfo;
 }
 
 const ELEMENT_MAP: Record<string, string> = {
@@ -53,6 +86,31 @@ const SEASONAL_STRENGTH: Record<string, Record<string, string>> = {
 const LU_INDEX: Record<string, string> = { '甲': '寅', '乙': '卯', '丙': '巳', '丁': '午', '戊': '巳', '己': '午', '庚': '申', '辛': '酉', '壬': '亥', '癸': '子' };
 const REN_INDEX: Record<string, string> = { '甲': '卯', '丙': '午', '戊': '午', '庚': '酉', '壬': '子' };
 
+const STEM_YIN_YANG: Record<string, 'yang' | 'yin'> = {
+  '甲': 'yang', '丙': 'yang', '戊': 'yang', '庚': 'yang', '壬': 'yang',
+  '乙': 'yin', '丁': 'yin', '己': 'yin', '辛': 'yin', '癸': 'yin',
+};
+const STEM_ELEMENT: Record<string, string> = {
+  '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
+  '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水',
+};
+const GENERATES: Record<string, string> = { '木': '火', '火': '土', '土': '金', '金': '水', '水': '木' };
+const CONTROLS: Record<string, string> = { '木': '土', '土': '水', '水': '火', '火': '金', '金': '木' };
+const SHENG_XIAO: Record<string, string> = { '子': '鼠', '丑': '牛', '寅': '虎', '卯': '兔', '辰': '龙', '巳': '蛇', '午': '马', '未': '羊', '申': '猴', '酉': '鸡', '戌': '狗', '亥': '猪' };
+
+/** 十神：以日主为坐标，判定其它天干与日主的关系 */
+export function getShiShen(dayMaster: string, otherStem: string): string {
+  if (otherStem === dayMaster) return '比肩';
+  const dmEl = STEM_ELEMENT[dayMaster];
+  const oEl = STEM_ELEMENT[otherStem];
+  const samePolarity = STEM_YIN_YANG[dayMaster] === STEM_YIN_YANG[otherStem];
+  if (dmEl === oEl) return samePolarity ? '比肩' : '劫财';
+  if (GENERATES[dmEl] === oEl) return samePolarity ? '食神' : '伤官';   // 我生
+  if (CONTROLS[dmEl] === oEl) return samePolarity ? '偏财' : '正财';   // 我克
+  if (GENERATES[oEl] === dmEl) return samePolarity ? '偏印' : '正印';  // 生我
+  return samePolarity ? '七杀' : '正官';                                // 克我
+}
+
 export function calculateBazi(date: Date, gender: 'male' | 'female'): BaziData {
   const solar = Solar.fromDate(date);
   const lunar = solar.getLunar();
@@ -79,6 +137,8 @@ export function calculateBazi(date: Date, gender: 'male' | 'female'): BaziData {
 
   const fiveElementsCount: Record<string, number> = { '金': 0, '木': 0, '水': 0, '火': 0, '土': 0 };
   elements.forEach(e => { if (e) fiveElementsCount[e]++; });
+
+  const missingElements = Object.keys(fiveElementsCount).filter(k => fiveElementsCount[k] === 0);
 
   const dmElement = ELEMENT_MAP[day.stem];
   const strength = SEASONAL_STRENGTH[month.branch] || {};
@@ -136,15 +196,61 @@ export function calculateBazi(date: Date, gender: 'male' | 'female'): BaziData {
       break;
   }
 
+  // ── 大运排盘（起运与八步大运 + 当前大运流年） ──────────────────────────
+  let yunInfo: YunInfo | undefined;
+  try {
+    const yun = eightChar.getYun(gender === 'male' ? 1 : 2);
+    const startSolar = yun.getStartSolar();
+    const birthYear = date.getFullYear();
+    // 虚岁 = 当前公历年 - 出生年 + 1（简化展示口径）
+    const currentAge = new Date().getFullYear() - birthYear + 1;
+    const periods: DaYunPeriod[] = [];
+    let current: DaYunPeriod | undefined;
+    yun.getDaYun().slice(1).forEach(d => {
+      const p: DaYunPeriod = {
+        ganZhi: d.getGanZhi(),
+        startYear: d.getStartYear(),
+        endYear: d.getEndYear(),
+        startAge: d.getStartAge(),
+        endAge: d.getEndAge(),
+        isCurrent: currentAge >= d.getStartAge() && currentAge <= d.getEndAge(),
+      };
+      if (p.isCurrent) current = p;
+      periods.push(p);
+    });
+    let liuNian: LiuNianInfo[] = [];
+    if (current) {
+      const daYun = yun.getDaYun().slice(1).find(d => d.getStartAge() === current!.startAge);
+      if (daYun) {
+        liuNian = daYun.getLiuNian().map(l => ({
+          ganZhi: l.getGanZhi(),
+          year: l.getYear(),
+          age: l.getAge(),
+        }));
+      }
+    }
+    yunInfo = {
+      startText: `出生后约 ${yun.getStartYear()} 年 ${yun.getStartMonth()} 个月起运，交运于 ${startSolar.getYear()} 年 ${startSolar.getMonth()} 月 ${startSolar.getDay()} 日（${yun.isForward() ? '顺行' : '逆行'}）。`,
+      forward: yun.isForward(),
+      periods,
+      liuNian,
+    };
+  } catch (e) {
+    // 大运排盘失败不影响主功能
+    yunInfo = undefined;
+  }
+
   return {
-    year: { ...year, element: year.stemElement },
-    month: { ...month, element: month.stemElement },
-    day: { ...day, element: day.stemElement },
-    hour: { ...hour, element: hour.stemElement },
+    year: { ...year, element: year.stemElement, naYin: eightChar.getYearNaYin(), shiShen: getShiShen(day.stem, year.stem) },
+    month: { ...month, element: month.stemElement, naYin: eightChar.getMonthNaYin(), shiShen: getShiShen(day.stem, month.stem) },
+    day: { ...day, element: day.stemElement, naYin: eightChar.getDayNaYin(), shiShen: '日主' },
+    hour: { ...hour, element: hour.stemElement, naYin: eightChar.getTimeNaYin(), shiShen: getShiShen(day.stem, hour.stem) },
     fiveElements: fiveElementsCount,
     dayMaster: day.stem,
     dayMasterElement: dmElement,
     dayMasterAnalysis: `日主${day.stem}，五行属${dmElement}。`,
+    shengXiao: SHENG_XIAO[year.branch] || '',
+    missingElements,
     monthCommand: {
       branch: month.branch,
       element: ELEMENT_MAP[month.branch],
@@ -154,6 +260,7 @@ export function calculateBazi(date: Date, gender: 'male' | 'female'): BaziData {
     structure: {
       name: structName,
       description: structDesc
-    }
+    },
+    yun: yunInfo
   };
 }

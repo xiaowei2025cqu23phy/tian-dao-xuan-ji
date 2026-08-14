@@ -12,7 +12,8 @@
  * 运行：npm run verify:hexagrams
  */
 import { HEXAGRAMS_DATA, GET_HEX_BY_BINARY, getMutualHexagram, getOppositeHexagram, getInverseHexagram, getTiYong, getLineDetails, TRIGRAMS } from '../src/lib/iching-data.ts';
-import { calculateBazi } from '../src/lib/lunar-service.ts';
+import { calculateBazi, getShiShen } from '../src/lib/lunar-service.ts';
+import { getTodayAlmanac } from '../src/lib/almanac-service.ts';
 
 let failures = 0;
 const fail = (msg: string) => { failures++; console.error(`  ✗ ${msg}`); };
@@ -199,6 +200,61 @@ for (let d = new Date(2015, 2, 6, 10, 0); d < new Date(2015, 3, 5); d.setDate(d.
 }
 if (yangrenChecked) ok('甲日卯月断「阳刃格」验证通过');
 else fail('未能定位到甲日卯月的测试日期');
+
+console.log('\n[7/8] 十神判定校验（以甲木日主为坐标）');
+const SHI_SHEN_CASES: [string, string][] = [
+  ['甲', '比肩'], ['乙', '劫财'],
+  ['丙', '食神'], ['丁', '伤官'],
+  ['戊', '偏财'], ['己', '正财'],
+  ['庚', '七杀'], ['辛', '正官'],
+  ['壬', '偏印'], ['癸', '正印'],
+];
+for (const [stem, expected] of SHI_SHEN_CASES) {
+  const got = getShiShen('甲', stem);
+  if (got !== expected) fail(`甲日主 vs ${stem} 应为「${expected}」，实际「${got}」`);
+}
+ok('甲木日主十神全表正确');
+// 阴干抽查：乙日主 vs 甲（劫财）、vs 丙（伤官）、vs 壬（正印）、vs 庚（正官）
+const yinChecks: [string, string, string][] = [
+  ['乙', '甲', '劫财'], ['乙', '丙', '伤官'], ['乙', '壬', '正印'], ['乙', '庚', '正官'], ['乙', '癸', '偏印'], ['乙', '乙', '比肩'],
+];
+for (const [dm, other, expected] of yinChecks) {
+  const got = getShiShen(dm, other);
+  if (got !== expected) fail(`${dm}日主 vs ${other} 应为「${expected}」，实际「${got}」`);
+}
+ok('阴干十神抽查正确');
+
+console.log('\n[8/8] 大运 / 纳音 / 生肖 / 黄历校验');
+const bz2 = calculateBazi(new Date(1990, 5, 15, 14, 0), 'female'); // 1990-06-15 14:00 坤造
+for (const [label, p] of [['年', bz2.year], ['月', bz2.month], ['日', bz2.day], ['时', bz2.hour]] as const) {
+  if (!p.naYin || p.naYin.length < 2) fail(`${label}柱纳音缺失: ${p.naYin}`);
+  if (!p.shiShen) fail(`${label}柱十神缺失`);
+}
+if (!bz2.shengXiao) fail('生肖缺失');
+if (!bz2.yun) {
+  fail('大运排盘缺失');
+} else {
+  if (bz2.yun.periods.length < 8) fail(`大运应不少于 8 步，实际 ${bz2.yun.periods.length}`);
+  let prevAge = 0;
+  let currentCount = 0;
+  for (const p of bz2.yun.periods) {
+    if (!/^[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]$/.test(p.ganZhi)) fail(`大运干支非法: ${p.ganZhi}`);
+    if (p.startAge <= prevAge) fail(`大运年龄未递增: ${p.startAge} <= ${prevAge}`);
+    prevAge = p.endAge;
+    if (p.isCurrent) currentCount++;
+  }
+  if (currentCount !== 1) fail(`当前大运应唯一，实际 ${currentCount} 个`);
+  if (bz2.yun.liuNian.length !== 10) fail(`当前大运流年应为 10 个，实际 ${bz2.yun.liuNian.length}`);
+  ok(`坤造 1990-06-15 14:00：生肖${bz2.shengXiao}，起运「${bz2.yun.startText}」，8 步大运完整，当前大运 ${bz2.yun.periods.find(p => p.isCurrent)?.ganZhi}`);
+}
+const almanac = getTodayAlmanac(new Date());
+if (!almanac.dayGanZhi || !almanac.lunarDate) fail('黄历日期信息缺失');
+if (!Array.isArray(almanac.yi) || !Array.isArray(almanac.ji)) fail('黄历宜忌缺失');
+if (!almanac.chong || !almanac.sha) fail('黄历冲煞缺失');
+const posKeys = Object.keys(almanac.positions);
+if (posKeys.length !== 5 || posKeys.some(k => !almanac.positions[k as keyof typeof almanac.positions])) fail('黄历神煞方位缺失');
+if (!almanac.zhiXing || !almanac.tianShen || !almanac.tianShenType) fail('黄历值星/天神缺失');
+ok(`今日黄历：${almanac.lunarDate} ${almanac.dayGanZhi}日，宜[${almanac.yi.slice(0, 3).join('、')}${almanac.yi.length > 3 ? '…' : ''}]，${almanac.tianShen}(${almanac.tianShenType})`);
 
 console.log('\n========================================');
 if (failures === 0) {

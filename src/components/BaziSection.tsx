@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { calculateBazi, BaziData } from '../lib/lunar-service';
+import { FIVE_ELEMENTS_ADVICE } from '../lib/bazi-data';
 import { Calendar, User, Info, Loader2, Sparkles, RefreshCw, Send, MessageSquare, BookOpen, Clock } from 'lucide-react';
 import { interpretMetaphysics, getOfflineBaziAnalysis, AIConfig, ChatMessage, QUESTION_CATEGORIES } from '../services/aiService';
 
@@ -268,20 +269,35 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                 <div className="brush-accent absolute right-10 top-20 text-9xl">天</div>
                 <div className="brush-accent absolute left-10 bottom-20 text-9xl">道</div>
 
-                <div className="grid grid-cols-4 gap-4 h-[360px] relative">
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                  <span className="text-[10px] px-2.5 py-1 bg-ink-black text-white font-bold tracking-[0.3em]">{gender === 'male' ? '乾造' : '坤造'}</span>
+                  <span className="text-[10px] px-2.5 py-1 border border-ink-black/10 font-bold tracking-[0.3em]">生肖 {result.shengXiao}</span>
+                  <span className="text-[10px] px-2.5 py-1 border border-ink-black/10 text-ink-black/60 font-bold tracking-[0.3em]">
+                    日主 {result.dayMaster}{result.dayMasterElement}
+                  </span>
+                  {result.missingElements.length > 0 && (
+                    <span className="text-[10px] px-2.5 py-1 border border-imperial-red/20 text-imperial-red font-bold tracking-[0.2em]">
+                      缺 {result.missingElements.join('')}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative">
                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
                       <div className="text-[180px] font-brush">命</div>
                    </div>
-                   <BaziColumn label="时柱" stem={result.hour.stem} branch={result.hour.branch} elementColor={getElementColor(result.hour.element)} />
+                   <BaziColumn label="时柱" stem={result.hour.stem} branch={result.hour.branch} elementColor={getElementColor(result.hour.element)} naYin={result.hour.naYin} shiShen={result.hour.shiShen} />
                    <BaziColumn 
                       label="日柱" 
                       stem={result.day.stem} 
                       branch={result.day.branch} 
                       elementColor={getElementColor(result.day.element)} 
+                      naYin={result.day.naYin}
+                      shiShen={result.day.shiShen}
                       isMaster 
                     />
-                   <BaziColumn label="月柱" stem={result.month.stem} branch={result.month.branch} elementColor={getElementColor(result.month.element)} />
-                   <BaziColumn label="年柱" stem={result.year.stem} branch={result.year.branch} elementColor={getElementColor(result.year.element)} />
+                   <BaziColumn label="月柱" stem={result.month.stem} branch={result.month.branch} elementColor={getElementColor(result.month.element)} naYin={result.month.naYin} shiShen={result.month.shiShen} />
+                   <BaziColumn label="年柱" stem={result.year.stem} branch={result.year.branch} elementColor={getElementColor(result.year.element)} naYin={result.year.naYin} shiShen={result.year.shiShen} />
                 </div>
 
                 {/* Energy Landscape & Wu Xing Cycle */}
@@ -380,6 +396,36 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                     })}
                   </div>
                 </div>
+
+                {/* 五行缺行与调候补益 */}
+                {result.missingElements.length > 0 && (
+                  <div className="pt-10 border-t border-ink-black/10">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-1.5 h-1.5 bg-imperial-red rotate-45" />
+                      <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">五行缺行与补益 (Elemental Deficiency)</span>
+                    </div>
+                    <div className="p-6 bg-imperial-red/[0.02] border border-imperial-red/10 rounded-sm space-y-4">
+                      <p className="text-[11px] text-ink-black/70 font-serif-sc leading-relaxed">
+                        命局四柱干支本气中，<span className="text-imperial-red font-bold">{result.missingElements.map(el => `${el}行`).join('、')}</span> 未现。
+                        <span className="opacity-50">（地支藏干之中或有余气，此处仅计本气。）</span>
+                        五行贵在流通平衡，缺者宜以物象、方位、色彩温和补益：
+                      </p>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {result.missingElements.map(el => (
+                          <div key={el} className="p-4 bg-white/70 border border-ink-black/5 rounded-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`w-2.5 h-2.5 rounded-full ${getElementBg(el)}`} />
+                              <span className="text-xs font-bold text-ink-black/80">{el}行</span>
+                            </div>
+                            <p className="text-[10px] text-ink-black/55 leading-relaxed font-serif-sc">
+                              {FIVE_ELEMENTS_ADVICE[el]}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Bazi Structure Analysis */}
                 {result.structure && (
@@ -485,6 +531,54 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                            </p>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 大运流年 */}
+                {result.yun && (
+                  <div className="pt-12 border-t border-ink-black/10">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-1.5 h-1.5 bg-imperial-red rotate-45" />
+                      <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">大运流年 (Fortune Cycles)</span>
+                    </div>
+                    <div className="space-y-6">
+                      <div className="p-4 bg-ink-black/[0.02] border border-ink-black/5 rounded-sm text-[10px] leading-relaxed text-ink-black/60 font-serif-sc">
+                        <span className="text-imperial-red font-bold">起运：</span>{result.yun.startText}
+                        <span className="ml-2 opacity-50">大运{result.yun.forward ? '顺行' : '逆行'}，每步十年，一步一重天。</span>
+                      </div>
+
+                      <div className="overflow-x-auto custom-scrollbar pb-2">
+                        <div className="flex gap-3 min-w-max">
+                          {result.yun.periods.map((p, i) => (
+                            <div key={i} className={`w-24 shrink-0 p-3 border rounded-sm text-center transition-all ${p.isCurrent ? 'bg-imperial-red text-white border-imperial-red shadow-lg scale-[1.04]' : 'bg-white/70 border-ink-black/10 hover:border-ink-black/30'}`}>
+                              <div className={`font-brush text-xl ${p.isCurrent ? '' : 'text-ink-black'}`}>{p.ganZhi}</div>
+                              <div className={`text-[9px] mt-1 font-bold ${p.isCurrent ? 'text-white/85' : 'text-ink-black/45'}`}>{p.startAge}-{p.endAge} 岁</div>
+                              <div className={`text-[8px] mt-0.5 ${p.isCurrent ? 'text-white/60' : 'text-ink-black/30'}`}>{p.startYear}-{p.endYear}</div>
+                              {p.isCurrent && <div className="text-[8px] mt-1 tracking-[0.3em] font-bold">今运</div>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {result.yun.liuNian.length > 0 && (
+                        <div>
+                          <span className="text-[9px] uppercase tracking-widest font-bold opacity-30 block mb-2">当前大运 · 流年十载</span>
+                          <div className="overflow-x-auto custom-scrollbar pb-2">
+                            <div className="flex gap-2 min-w-max">
+                              {result.yun.liuNian.map(l => {
+                                const isThisYear = l.year === new Date().getFullYear();
+                                return (
+                                  <div key={l.year} className={`w-16 shrink-0 p-2 border rounded-sm text-center ${isThisYear ? 'bg-ink-black text-white border-ink-black shadow-md' : 'bg-white/60 border-ink-black/5'}`}>
+                                    <div className="text-xs font-bold">{l.ganZhi}</div>
+                                    <div className={`text-[8px] mt-0.5 ${isThisYear ? 'text-white/75' : 'text-ink-black/35'}`}>{l.year} · {l.age}岁{isThisYear ? ' · 今' : ''}</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -639,7 +733,7 @@ const BRANCH_INFO: Record<string, { element: string, nature: string, zodiac: str
   '亥': { element: '水', nature: '阴水', zodiac: '猪', hiddenStems: [{ stem: '壬', element: '水', strength: '70%', type: '本气' }, { stem: '甲', element: '木', strength: '30%', type: '中气' }], desc: '心旷神怡，待人真诚。', reference: '《尔雅》：岁在亥曰大渊献。' },
 };
 
-function BaziColumn({ label, stem, branch, elementColor, isMaster }: { label: string, stem: string, branch: string, elementColor: string, isMaster?: boolean }) {
+function BaziColumn({ label, stem, branch, elementColor, isMaster, naYin, shiShen }: { label: string, stem: string, branch: string, elementColor: string, isMaster?: boolean, naYin?: string, shiShen?: string }) {
   const [showInfo, setShowInfo] = useState(false);
   const sInfo = STEM_INFO[stem];
   const bInfo = BRANCH_INFO[branch];
@@ -668,7 +762,7 @@ function BaziColumn({ label, stem, branch, elementColor, isMaster }: { label: st
           <span className={`text-7xl md:text-8xl font-brush ${elementColor} leading-none ink-glow select-none`}>{branch}</span>
           <button 
             onClick={() => setShowInfo(true)}
-            className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-20 hover:opacity-100 p-2 hover:text-imperial-red transition-all flex flex-col items-center gap-1 group/qibtn"
+            className="absolute -right-1 top-1/2 -translate-y-1/2 opacity-20 hover:opacity-100 p-2 hover:text-imperial-red transition-all flex flex-col items-center gap-1 group/qibtn"
             title={`${branch} 藏干与地支详情`}
           >
             <div className="text-[8px] font-bold vertical-text opacity-40 group-hover/qibtn:opacity-100 transition-opacity">藏干详情</div>
@@ -678,6 +772,11 @@ function BaziColumn({ label, stem, branch, elementColor, isMaster }: { label: st
       </div>
       
       <div className={`mt-12 h-[2px] w-12 ${isMaster ? 'bg-imperial-red/40' : 'bg-ink-black/20'}`} />
+
+      <div className="mt-4 text-center space-y-1.5">
+        <div className={`text-[10px] font-bold tracking-[0.3em] ${isMaster ? 'text-imperial-red' : 'text-ink-black/60'}`}>{shiShen || '—'}</div>
+        <div className="text-[9px] text-ink-black/40 font-serif-sc tracking-wider">{naYin || ''}</div>
+      </div>
 
       <AnimatePresence>
         {showInfo && (
