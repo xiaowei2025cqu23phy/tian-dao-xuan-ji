@@ -660,9 +660,9 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
 
                                {activeLineIdx === i && hexagram?.original?.lines?.[i] && (
                                  <motion.div 
-                                   initial={{ opacity: 0, x: 20 }}
-                                   animate={{ opacity: 1, x: 0 }}
-                                   className="absolute left-full ml-12 bg-white/95 backdrop-blur-sm border border-imperial-red/20 p-4 shadow-xl z-50 w-64 flex flex-col gap-3"
+                                   initial={{ opacity: 0, y: -8 }}
+                                   animate={{ opacity: 1, y: 0 }}
+                                   className="absolute left-1/2 -translate-x-1/2 bottom-full mb-3 bg-white/95 backdrop-blur-sm border border-imperial-red/20 p-4 shadow-xl z-50 w-72 flex flex-col gap-3"
                                  >
                                     <div className="flex items-center justify-between border-b border-imperial-red/10 pb-1">
                                       <div className="text-[9px] uppercase tracking-widest text-imperial-red font-bold">

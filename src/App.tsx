@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Moon, Sun, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Lunar } from 'lunar-javascript';
 import BaziSection from './components/BaziSection';
 import IChingSection from './components/IChingSection';
+import AlmanacPanel from './components/AlmanacPanel';
 
 import AISettingsModal from './components/AISettingsModal';
 import { AIConfig, DEFAULT_AI_CONFIG } from './services/aiService';
@@ -57,8 +58,8 @@ export default function App() {
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-ink-black/5 rounded-full blur-[100px] pointer-events-none z-0" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-imperial-red/[0.04] rounded-full blur-[120px] pointer-events-none z-0" />
 
-      {/* Plum Blossom Poetry Accent */}
-      <div className="fixed right-12 top-1/4 vertical-text font-serif-sc text-sm opacity-20 tracking-[1em] pointer-events-none select-none italic text-imperial-red font-bold">
+      {/* Plum Blossom Poetry Accent（小屏隐藏，避免遮挡内容） */}
+      <div className="hidden lg:block fixed right-12 top-1/4 vertical-text font-serif-sc text-sm opacity-20 tracking-[1em] pointer-events-none select-none italic text-imperial-red font-bold">
         墙角数枝梅<br/>凌寒独自开<br/>遥知不是雪<br/>为有暗香来
       </div>
 
@@ -90,7 +91,7 @@ export default function App() {
         onSave={saveConfig}
       />
 
-      <header className="w-full max-w-7xl flex flex-col md:flex-row justify-between items-center md:items-end mb-20 px-6 md:px-12 z-10 gap-12 mt-16">
+      <header className="w-full max-w-7xl flex flex-col md:flex-row justify-between items-center md:items-end mb-20 px-6 md:px-12 z-10 gap-12 mt-24 md:mt-20">
         <div className="flex flex-col text-center md:text-left relative">
           <motion.h1 
             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
@@ -117,19 +118,19 @@ export default function App() {
           <div className="flex p-2.5 border border-ink-black/10 bg-white/50 shadow-2xl backdrop-blur-md relative group rounded-sm ring-1 ring-white/20">
             <button
                onClick={() => setActiveTab('bazi')}
-               className={`w-44 md:w-64 py-5 transition-all text-[15px] tracking-[0.6em] font-bold relative z-10 ${activeTab === 'bazi' ? 'bg-ink-black text-white shadow-2xl scale-[1.02]' : 'text-ink-black/40 hover:text-ink-black/70'}`}
+               className={`w-36 sm:w-44 md:w-64 py-5 transition-all text-[15px] tracking-[0.6em] font-bold relative z-10 ${activeTab === 'bazi' ? 'bg-ink-black text-white shadow-2xl scale-[1.02]' : 'text-ink-black/45 hover:text-ink-black/75'}`}
             >
               生辰八字
             </button>
             <button
                onClick={() => setActiveTab('iching')}
-               className={`w-44 md:w-64 py-5 transition-all text-[15px] tracking-[0.6em] font-bold relative z-10 ${activeTab === 'iching' ? 'bg-ink-black text-white shadow-2xl scale-[1.02]' : 'text-ink-black/40 hover:text-ink-black/70'}`}
+               className={`w-36 sm:w-44 md:w-64 py-5 transition-all text-[15px] tracking-[0.6em] font-bold relative z-10 ${activeTab === 'iching' ? 'bg-ink-black text-white shadow-2xl scale-[1.02]' : 'text-ink-black/45 hover:text-ink-black/75'}`}
             >
               周易起卦
             </button>
           </div>
           
-          <div className="flex items-center gap-6 opacity-40 text-[11px] tracking-[0.5em] font-bold transition-all hover:opacity-100">
+          <div className="hidden md:flex items-center gap-6 opacity-40 text-[11px] tracking-[0.5em] font-bold transition-all hover:opacity-100">
             <span>格物致知</span>
             <div className="w-2 h-2 bg-imperial-red rotate-45 shadow-[0_0_10px_rgba(139,28,28,0.3)]" />
             <span>通灵演化</span>
@@ -164,6 +165,8 @@ export default function App() {
           </AnimatePresence>
         </div>
       </main>
+
+      <AlmanacPanel />
 
       <footer className="w-full max-w-7xl px-12 py-12 flex flex-col md:flex-row justify-between items-center gap-8 z-10 border-t border-dark-gold/10 mt-12 bg-white/20 backdrop-blur-sm">
         <div className="flex flex-wrap justify-center gap-8 text-[10px] tracking-[0.3em] font-bold uppercase opacity-50">

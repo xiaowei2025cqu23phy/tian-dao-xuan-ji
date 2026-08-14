@@ -4,13 +4,13 @@
   --font-serif-sc: "Noto Serif SC", serif;
   --font-calligraphy: "Ma Shan Zheng", cursive;
   --font-brush: "Zhi Mang Xing", cursive;
-  
-  --color-amber-gold: #a67c52;
-  --color-dark-gold: #5d4a2a;
-  --color-ink-black: #1a1a1c;
-  --color-paper: #f4efdf; /* Warmer, aged paper like the image */
-  --color-imperial-red: #b91c1c; /* Vivid plum red */
-  --color-active-card-bg: #fdfaf3;
+
+  --color-amber-gold: #b08d57;
+  --color-dark-gold: #6b5634;
+  --color-ink-black: #1c1d21; /* 墨黑（略带暖调，避免死黑） */
+  --color-paper: #faf7ef; /* 净白宣纸（去除褐色观感） */
+  --color-imperial-red: #a81f1f; /* 朱砂红 */
+  --color-active-card-bg: #fffdf7;
 }
 
 @layer base {
@@ -18,32 +18,27 @@
     @apply font-serif-sc overflow-x-hidden;
     background-color: var(--color-paper);
     color: var(--color-ink-black);
-    /* Multi-layered background for ink-wash texture */
-    background-image: 
-      url('https://www.transparenttextures.com/patterns/handmade-paper.png'),
-      radial-gradient(circle at 90% 10%, rgba(185, 28, 28, 0.03) 0%, transparent 40%),
-      radial-gradient(ellipse at 10% 80%, rgba(26, 26, 28, 0.05) 0%, transparent 60%);
+    /* 本地生成宣纸纹理 + 淡墨晕染，不再依赖外部图片服务 */
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(28, 29, 33, 0.022) 1px, transparent 0),
+      radial-gradient(circle at 85% 6%, rgba(168, 31, 31, 0.028) 0%, transparent 40%),
+      radial-gradient(ellipse at 8% 88%, rgba(28, 29, 33, 0.035) 0%, transparent 58%);
+    background-size: 26px 26px, 100% 100%, 100% 100%;
     background-attachment: fixed;
   }
 }
 
-/* Plum Blossom Decorative Element for Background */
-.plum-decoration {
-  position: fixed;
-  pointer-events: none;
-  opacity: 0.15;
-  z-index: 0;
-  filter: blur(1px);
-}
-
+/* 纸张卡片：纯白 + 本地纸纹 + 柔和阴影 */
 .scroll-surface {
-  background: white;
-  background-image: url('https://www.transparenttextures.com/patterns/handmade-paper.png');
-  border: 1px solid rgba(139, 28, 28, 0.1);
-  box-shadow: 
-    0 20px 60px rgba(0,0,0,0.05), 
-    inset 0 0 100px rgba(244, 239, 223, 0.5);
-  border-radius: 2px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(28, 29, 33, 0.014) 1px, transparent 0),
+    #ffffff;
+  background-size: 22px 22px;
+  border: 1px solid rgba(168, 31, 31, 0.08);
+  box-shadow:
+    0 12px 40px rgba(28, 29, 33, 0.06),
+    inset 0 0 80px rgba(250, 247, 239, 0.35);
+  border-radius: 3px;
 }
 
 .brush-accent {
@@ -61,13 +56,13 @@
 }
 
 .taoji-pattern {
-  background-image: 
-    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.03) 1px, transparent 0);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.025) 1px, transparent 0);
   background-size: 32px 32px;
 }
 
 .ink-wash-overlay {
-  background: radial-gradient(circle at center, transparent 0%, rgba(242, 233, 217, 0.5) 100%);
+  background: radial-gradient(circle at center, transparent 0%, rgba(250, 247, 239, 0.5) 100%);
 }
 
 .bagua-ring {
@@ -88,4 +83,20 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* 自定义滚动条（古典细线风格） */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(28, 29, 33, 0.18);
+  border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 31, 31, 0.4);
 }
