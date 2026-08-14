@@ -4,14 +4,16 @@ import { GET_HEX_BY_BINARY } from "../lib/iching-data";
 
 const getApiKey = (provider: AIProvider, userKey?: string) => {
   if (userKey) return userKey;
-  
-  // Safe environment variable access for browser
+
+  // 浏览器环境仅读取 Vite 注入的 VITE_ 环境变量；
+  // 生产构建由 vite.config.ts 的安全守卫保证产物内不含真实密钥。
   const env = (import.meta as any).env || {};
-  
-  if (provider === 'gemini') return env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined);
-  if (provider === 'openai') return env.VITE_OPENAI_API_KEY || (typeof process !== 'undefined' ? process.env.OPENAI_API_KEY : undefined);
-  if (provider === 'deepseek') return env.VITE_DEEPSEEK_API_KEY || (typeof process !== 'undefined' ? process.env.DEEPSEEK_API_KEY : undefined);
-  return undefined;
+  const keys: Partial<Record<AIProvider, string>> = {
+    gemini: env.VITE_GEMINI_API_KEY,
+    openai: env.VITE_OPENAI_API_KEY,
+    deepseek: env.VITE_DEEPSEEK_API_KEY,
+  };
+  return keys[provider];
 };
 
 export type AIProvider = 'gemini' | 'openai' | 'deepseek' | 'qwen' | 'zhipu' | 'custom';
