@@ -1,14 +1,30 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Moon, Sun, Settings } from 'lucide-react';
+import { Lunar } from 'lunar-javascript';
 import BaziSection from './components/BaziSection';
 import IChingSection from './components/IChingSection';
 
 import AISettingsModal from './components/AISettingsModal';
 import { AIConfig, DEFAULT_AI_CONFIG } from './services/aiService';
 
+// 农历十二月雅称（花月）
+const POETIC_MONTHS: Record<number, string> = {
+  1: '柳月', 2: '杏月', 3: '桃月', 4: '槐月', 5: '榴月', 6: '荷月',
+  7: '巧月', 8: '桂月', 9: '菊月', 10: '阳月', 11: '葭月', 12: '梅月',
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'bazi' | 'iching'>('bazi');
+  // 依当前时刻动态推算岁次与农历月（避免硬编码过时）
+  const [era] = useState(() => {
+    const l = Lunar.fromDate(new Date());
+    return {
+      year: l.getYearInGanZhi(),
+      month: l.getMonthInChinese(),
+      poetic: POETIC_MONTHS[Math.abs(l.getMonth())] || '',
+    };
+  });
   const [aiConfig, setAiConfig] = useState<AIConfig>(() => {
     const saved = localStorage.getItem('ai_config');
     if (saved) {
@@ -90,8 +106,8 @@ export default function App() {
         </div>
         
         <div className="text-center md:text-right border-l-0 md:border-l border-ink-black/10 pl-0 md:pl-10 space-y-2">
-          <div className="text-5xl font-calligraphy text-ink-black/90">岁次 丙午年</div>
-          <div className="text-sm opacity-50 tracking-[0.4em] font-bold text-imperial-red">甲辰冬月 · 梅月</div>
+          <div className="text-5xl font-calligraphy text-ink-black/90">岁次 {era.year}年</div>
+          <div className="text-sm opacity-50 tracking-[0.4em] font-bold text-imperial-red">{era.month}{era.poetic ? ` · ${era.poetic}` : ''}</div>
         </div>
       </header>
 
@@ -158,7 +174,7 @@ export default function App() {
           <span>纳甲排盘 NAJIA</span>
         </div>
         <div className="text-[10px] tracking-[0.2em] opacity-40 font-bold uppercase">
-          © 2026 · 天道玄机 · 顺天应人 · HEAVENLY DECRYPT
+          © {new Date().getFullYear()} · 天道玄机 · 顺天应人 · HEAVENLY DECRYPT
         </div>
       </footer>
     </div>
