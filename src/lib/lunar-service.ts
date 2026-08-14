@@ -1,4 +1,4 @@
-import { Solar, Lunar, LunarMonth, EightChar } from 'lunar-javascript';
+import { Solar } from 'lunar-javascript';
 
 export interface BaziData {
   year: { stem: string; branch: string; element: string };
@@ -7,6 +7,7 @@ export interface BaziData {
   hour: { stem: string; branch: string; element: string };
   fiveElements: Record<string, number>;
   dayMaster: string;
+  dayMasterElement: string;
   dayMasterAnalysis: string;
   monthCommand: {
     branch: string;
@@ -47,6 +48,10 @@ const SEASONAL_STRENGTH: Record<string, Record<string, string>> = {
   '丑': { '土': '旺', '金': '相', '火': '休', '木': '囚', '水': '死' },
   '未': { '土': '旺', '金': '相', '火': '休', '木': '囚', '水': '死' },
 };
+
+// 天干临官（建禄）之地与阳干帝旺（阳刃）之地
+const LU_INDEX: Record<string, string> = { '甲': '寅', '乙': '卯', '丙': '巳', '丁': '午', '戊': '巳', '己': '午', '庚': '申', '辛': '酉', '壬': '亥', '癸': '子' };
+const REN_INDEX: Record<string, string> = { '甲': '卯', '丙': '午', '戊': '午', '庚': '酉', '壬': '子' };
 
 export function calculateBazi(date: Date, gender: 'male' | 'female'): BaziData {
   const solar = Solar.fromDate(date);
@@ -99,10 +104,20 @@ export function calculateBazi(date: Date, gender: 'male' | 'female'): BaziData {
 
   const relation = getRelation(dmElement, monthElement);
   switch (relation) {
-    case '比劫': 
-      structName = dmStrength === '旺' ? '建禄格/月劫格' : '身旺格';
-      structDesc = '日主得令，自坐强根，个性独立自强，富有竞争意识，宜用财官。';
+    case '比劫': {
+      // 月令与日主同气：区分建禄、阳刃与月劫（旧逻辑中“身旺格”分支因同气必旺而不可达）
+      if (month.branch === LU_INDEX[day.stem]) {
+        structName = '建禄格';
+        structDesc = '月支为日主临官建禄之地，日主得令自立，根基稳固，精力充沛，宜顺势立业，忌过刚独断。';
+      } else if (month.branch === REN_INDEX[day.stem]) {
+        structName = '阳刃格';
+        structDesc = '月支为日主帝旺阳刃之地，气势极盛，性格刚烈果决，宜以财官制刃，防过刚易折、锋芒毕露。';
+      } else {
+        structName = '月劫格';
+        structDesc = '日主与月令比劫同气，得令有助，个性独立自强，富有竞争意识，宜用财官。';
+      }
       break;
+    }
     case '食伤':
       structName = '食伤格';
       structDesc = '日主生月令，才华横溢，感性多情，具有艺术天赋或创新能力，宜注意能量泄耗。';
@@ -128,6 +143,7 @@ export function calculateBazi(date: Date, gender: 'male' | 'female'): BaziData {
     hour: { ...hour, element: hour.stemElement },
     fiveElements: fiveElementsCount,
     dayMaster: day.stem,
+    dayMasterElement: dmElement,
     dayMasterAnalysis: `日主${day.stem}，五行属${dmElement}。`,
     monthCommand: {
       branch: month.branch,

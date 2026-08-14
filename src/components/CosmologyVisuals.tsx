@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Info, Users, Zap, Wind, Mountain, Sun, Waves, CloudRain, ShieldCheck } from 'lucide-react';
+import { Info, Zap, Wind, Mountain, Sun, Waves, CloudRain, ShieldCheck } from 'lucide-react';
 
 const TRIGRAM_DETAILS: Record<string, {
   name: string;
@@ -88,7 +88,10 @@ export function BaguaCircle() {
   const [mode, setMode] = useState<'pre' | 'post'>('pre');
   const [selectedTrigram, setSelectedTrigram] = useState<string | null>(null);
 
-  const preHeaven = ['乾', '巽', '坎', '艮', '坤', '震', '离', '兑'];
+  // 顺时针排列（屏幕坐标顺时针：上→右上→右→右下→下→左下→左→左上）
+  // 先天八卦（南上北下）：乾南、兑东南、离东、震东北、坤北、艮西北、坎西、巽西南
+  const preHeaven = ['乾', '兑', '离', '震', '坤', '艮', '坎', '巽'];
+  // 后天八卦：离南、坤西南、兑西、乾西北、坎北、艮东北、震东、巽东南
   const postHeaven = ['离', '坤', '兑', '乾', '坎', '艮', '震', '巽'];
   
   const currentTrigrams = mode === 'pre' ? preHeaven : postHeaven;

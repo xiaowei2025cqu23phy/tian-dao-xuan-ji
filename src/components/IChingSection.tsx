@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Coins, Hash, Clock, Sparkles, Loader2, RefreshCw, Send, MessageSquare, BookOpen, Info, History, ArrowRight } from 'lucide-react';
 import { interpretMetaphysics, AIConfig, QUESTION_CATEGORIES, ChatMessage } from '../services/aiService';
 import { GET_HEX_BY_BINARY, Hexagram, getMutualHexagram, getTiYong, HEXAGRAMS_DATA, getLineDetails, LineDetail, getOppositeHexagram, getInverseHexagram } from '../lib/iching-data';
+import { Lunar } from 'lunar-javascript';
 import { HeTu, Luoshu, BaguaCircle } from './CosmologyVisuals';
 
 type Line = {
@@ -50,6 +51,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
   const [method, setMethod] = useState<'coin' | 'number' | 'time' | 'manual'>('coin');
   const [lines, setLines] = useState<Line[]>([]);
   const [numInputs, setNumInputs] = useState({ n1: '', n2: '', n3: '' });
+  const [timeInfo, setTimeInfo] = useState('');
   const [status, setStatus] = useState<'idle' | 'tossing' | 'calculating' | 'finished'>('idle');
   const [view, setView] = useState<'divination' | 'theory' | 'history'>('divination');
   const [theoryTab, setTheoryTab] = useState<'hetu' | 'luoshu' | 'bagua' | 'hexagrams'>('bagua');
@@ -141,9 +143,13 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
   };
 
   const handleNumberDivination = () => {
-    const n1 = parseInt(numInputs.n1) || 0;
-    const n2 = parseInt(numInputs.n2) || 0;
-    const n3 = parseInt(numInputs.n3) || 0;
+    // Sanitize: accept only finite positive integers (rejects negative/zero/NaN)
+    const raw = [numInputs.n1, numInputs.n2, numInputs.n3];
+    const parsed = raw.map(v => {
+      const n = Math.abs(parseInt(v.trim(), 10));
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    });
+    const [n1, n2, n3] = parsed;
     
     if (!n1 || !n2 || !n3) return;
 
@@ -158,20 +164,21 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
     const lowerIdx = (n2 % 8) || 8;
     const movingLinePos = (n3 % 6) || 6; // 1-indexed from bottom
 
-    // Trigams binary (Bottom to top mapping)
+    // Trigram binary (Bottom to top mapping) — 先天八卦数序：乾1 兑2 离3 震4 巽5 坎6 艮7 坤8
     const trigramMap: Record<number, string> = {
-      1: '111', // Qian
-      2: '011', // Dui
-      3: '101', // Li
-      4: '001', // Zhen
-      5: '110', // Xun
-      6: '010', // Kan
-      7: '100', // Gen
-      8: '000', // Kun
+      1: '111', // Qian 乾
+      2: '011', // Dui 兑
+      3: '101', // Li 离
+      4: '100', // Zhen 震
+      5: '110', // Xun 巽
+      6: '010', // Kan 坎
+      7: '001', // Gen 艮
+      8: '000', // Kun 坤
     };
 
     const lowerBin = trigramMap[lowerIdx];
     const upperBin = trigramMap[upperIdx];
+    if (!lowerBin || !upperBin) return;
     const fullBinary = lowerBin + upperBin;
 
     const newLines: Line[] = fullBinary.split('').map((char, i) => ({
@@ -186,30 +193,39 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
 
   const handleTimeDivination = () => {
     const now = new Date();
-    const h = now.getHours();
-    const d = now.getDate();
-    const m = now.getMonth() + 1;
-    const y = now.getFullYear();
-    
-    // Simplified traditional time calculation
-    const n1 = y + m + d;
-    const n2 = n1 + h;
-    const n3 = n2; // Using n2 for moving line as well for simplicity
+    const lunar = Lunar.fromDate(now);
+
+    // 梅花易数「年月日时」起卦（古法）：
+    // 年数 = 农历年地支序数（子=1 … 亥=12）；月数 = 农历月（闰月取同序数）；
+    // 日数 = 农历日；时数 = 时辰序数（子时=1 … 亥时=12）。
+    // 上卦 = (年+月+日) mod 8（0 取 8）；下卦 = (年+月+日+时) mod 8；动爻 = (年+月+日+时) mod 6（0 取 6）。
+    const yearNum = lunar.getYearZhiIndex() + 1;
+    const monthNum = Math.abs(lunar.getMonth());
+    const dayNum = lunar.getDay();
+    const timeNum = lunar.getTimeZhiIndex() + 1;
+
+    const n1 = yearNum + monthNum + dayNum; // 上卦数（万物）
+    const n2 = n1 + timeNum;                // 下卦数（地理）
+    const n3 = n2;                          // 动爻数（人机）
 
     setNumInputs({ n1: n1.toString(), n2: n2.toString(), n3: n3.toString() });
-    
-    // Trigger logic
+    setTimeInfo(
+      `农历${lunar.getYearInGanZhi()}年 ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}日 ${lunar.getTimeZhi()}时 · ` +
+      `年${yearNum}+月${monthNum}+日${dayNum}=${n1}，加时${timeNum}=${n2}`
+    );
+
     const upperIdx = (n1 % 8) || 8;
     const lowerIdx = (n2 % 8) || 8;
     const movingLinePos = (n3 % 6) || 6;
 
     const trigramMap: Record<number, string> = {
-      1: '111', 2: '011', 3: '101', 4: '001',
-      5: '110', 6: '010', 7: '100', 8: '000',
+      1: '111', 2: '011', 3: '101', 4: '100',
+      5: '110', 6: '010', 7: '001', 8: '000',
     };
 
     const lowerBin = trigramMap[lowerIdx];
     const upperBin = trigramMap[upperIdx];
+    if (!lowerBin || !upperBin) return;
     const fullBinary = lowerBin + upperBin;
 
     const newLines: Line[] = fullBinary.split('').map((char, i) => ({
@@ -377,6 +393,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
     setHexagram(null);
     setChatHistory([]);
     setStatus('idle');
+    setTimeInfo('');
   };
 
   return (
@@ -536,8 +553,13 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                     <div className="space-y-2">
                        <Clock className="w-12 h-12 mx-auto text-ink-black opacity-20" />
                        <div className="text-[10px] italic opacity-40 leading-relaxed font-serif-sc">
-                         以当前天时演化卦象<br/>感应宇宙此时此刻之波动
+                          以当前天时演化卦象<br/>感应宇宙此时此刻之波动
                        </div>
+                       {timeInfo && (
+                         <div className="mx-auto max-w-[260px] p-3 bg-ink-black/[0.03] border border-imperial-red/10 text-[9px] leading-relaxed text-ink-black/60 font-serif-sc">
+                           {timeInfo}
+                         </div>
+                       )}
                     </div>
                     <button
                       onClick={handleTimeDivination}
@@ -1171,7 +1193,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                     ))}
                   </div>
 
-                  <div className="prose prose-sm prose-slate text-ink-black/60 leading-loose border-t border-ink-black/10 pt-6">
+                  <div className="text-ink-black/60 leading-loose border-t border-ink-black/10 pt-6">
                     <h4 className="text-ink-black font-brush text-2xl mb-4">易理浅析</h4>
                     <p className="font-serif-sc">
                       {theoryTab === 'bagua' && "八卦乃万物之象。乾为天，坤为地，震为雷，巽为风，坎为水，离为火，艮为山，兑为泽。"}

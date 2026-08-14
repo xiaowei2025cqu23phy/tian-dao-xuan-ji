@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { calculateBazi, BaziData } from '../lib/lunar-service';
-import { Calendar, User, Info, Loader2, Sparkles, RefreshCw, Send, MessageSquare, BookOpen } from 'lucide-react';
+import { Calendar, User, Info, Loader2, Sparkles, RefreshCw, Send, MessageSquare, BookOpen, Clock } from 'lucide-react';
 import { interpretMetaphysics, getOfflineBaziAnalysis, AIConfig, ChatMessage, QUESTION_CATEGORIES } from '../services/aiService';
 
 import { WuXingCycle } from './WuXingCycle';
@@ -166,7 +166,7 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
               <div className="border-b border-ink-black/20 pb-1 focus-within:border-ink-black transition-all">
                 <label className="text-[9px] uppercase tracking-[0.3em] opacity-40 block mb-2 font-bold">生辰之时</label>
                 <div className="flex items-center gap-3">
-                  <Loader2 className="w-4 h-4 opacity-30 text-ink-black" />
+                  <Clock className="w-4 h-4 opacity-30 text-ink-black" />
                   <input 
                     type="time" 
                     value={time}
@@ -406,7 +406,7 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                           <div className="flex items-center justify-between border-b border-ink-black/5 pb-4">
                             <span className="text-[10px] uppercase tracking-widest font-bold opacity-40">日主与月令关系深探 (Relational Deep Dive)</span>
                             <div className="flex gap-2">
-                              <span className="text-[10px] px-2 py-0.5 bg-imperial-red text-white font-bold">{result.dayMaster} · {result.dayMasterAnalysis.split('属')[1].replace('。', '')}</span>
+                              <span className="text-[10px] px-2 py-0.5 bg-imperial-red text-white font-bold">{result.dayMaster} · {result.dayMasterElement}</span>
                               <span className="text-[10px] px-2 py-0.5 bg-ink-black text-white font-bold">{result.monthCommand.branch}月 · {result.monthCommand.element}</span>
                             </div>
                           </div>
@@ -420,7 +420,7 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                               </p>
                               <div className="p-4 bg-imperial-red/[0.03] border-l-2 border-imperial-red">
                                 {Object.entries(STRENGTH_DEFINITIONS).map(([key, info]) => {
-                                  const isCurrent = result.monthCommand.strength[result.dayMasterAnalysis.split('属')[1].replace('。', '')] === key;
+                                  const isCurrent = result.monthCommand.strength[result.dayMasterElement] === key;
                                   if (!isCurrent) return null;
                                   return (
                                     <div key={key} className="space-y-2">
