@@ -103,13 +103,13 @@ export function BaguaCircle() {
       <div className="flex justify-center gap-2">
         <button 
           onClick={() => { setMode('pre'); setSelectedTrigram(null); }}
-          className={`px-4 py-1 text-[10px] tracking-widest uppercase transition-all ${mode === 'pre' ? 'bg-imperial-red text-white' : 'bg-ink-black/5 text-ink-black/40 hover:bg-ink-black/10'}`}
+          className={`px-4 py-1.5 text-[10px] tracking-widest uppercase transition-all ${mode === 'pre' ? 'bg-imperial-red text-white shadow-md' : 'bg-ink-black/10 text-ink-black/75 hover:bg-ink-black/20'}`}
         >
           先天八卦
         </button>
         <button 
           onClick={() => { setMode('post'); setSelectedTrigram(null); }}
-          className={`px-4 py-1 text-[10px] tracking-widest uppercase transition-all ${mode === 'post' ? 'bg-imperial-red text-white' : 'bg-ink-black/5 text-ink-black/40 hover:bg-ink-black/10'}`}
+          className={`px-4 py-1.5 text-[10px] tracking-widest uppercase transition-all ${mode === 'post' ? 'bg-imperial-red text-white shadow-md' : 'bg-ink-black/10 text-ink-black/75 hover:bg-ink-black/20'}`}
         >
           后天八卦
         </button>

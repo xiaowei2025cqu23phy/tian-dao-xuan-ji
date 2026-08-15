@@ -398,22 +398,22 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
 
   return (
     <div className="space-y-12">
-      <div className="flex gap-4 mb-8">
+      <div className="flex flex-wrap gap-4 mb-8">
         <button 
           onClick={() => setView('divination')}
-          className={`px-6 py-2 text-xs tracking-widest border transition-all ${view === 'divination' ? 'bg-ink-black text-white border-ink-black shadow-lg' : 'border-ink-black/20 text-ink-black/60 hover:border-ink-black/40'}`}
+          className={`px-6 py-2.5 text-xs tracking-widest border transition-all ${view === 'divination' ? 'bg-ink-black text-white border-ink-black shadow-lg' : 'bg-white/80 border-ink-black/40 text-ink-black/85 shadow-sm hover:border-ink-black/70 hover:text-ink-black'}`}
         >
           起卦占算
         </button>
         <button 
           onClick={() => setView('theory')}
-          className={`px-6 py-2 text-xs tracking-widest border transition-all ${view === 'theory' ? 'bg-ink-black text-white border-ink-black shadow-lg' : 'border-ink-black/20 text-ink-black/60 hover:border-ink-black/40'}`}
+          className={`px-6 py-2.5 text-xs tracking-widest border transition-all ${view === 'theory' ? 'bg-ink-black text-white border-ink-black shadow-lg' : 'bg-white/80 border-ink-black/40 text-ink-black/85 shadow-sm hover:border-ink-black/70 hover:text-ink-black'}`}
         >
           易理图解
         </button>
         <button 
           onClick={() => setView('history')}
-          className={`px-6 py-2 text-xs tracking-widest border transition-all flex items-center gap-2 ${view === 'history' ? 'bg-ink-black text-white border-ink-black shadow-lg' : 'border-ink-black/20 text-ink-black/60 hover:border-ink-black/40'}`}
+          className={`px-6 py-2.5 text-xs tracking-widest border transition-all flex items-center gap-2 ${view === 'history' ? 'bg-ink-black text-white border-ink-black shadow-lg' : 'bg-white/80 border-ink-black/40 text-ink-black/85 shadow-sm hover:border-ink-black/70 hover:text-ink-black'}`}
         >
           <History className="w-3 h-3" />
           历次占算
@@ -444,7 +444,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                       <button
                         key={cat.id}
                         onClick={() => setSelectedCategory(cat.id)}
-                        className={`px-1 py-2 border text-[9px] tracking-tighter transition-all flex items-center gap-1 overflow-hidden whitespace-nowrap ${selectedCategory === cat.id ? 'bg-ink-black/10 border-ink-black text-ink-black font-bold' : 'border-ink-black/5 text-ink-black/30 hover:border-ink-black/20'}`}
+                        className={`px-1 py-2 border text-[9px] tracking-tighter transition-all flex items-center gap-1 overflow-hidden whitespace-nowrap ${selectedCategory === cat.id ? 'bg-ink-black/10 border-ink-black text-ink-black font-bold' : 'border-ink-black/20 text-ink-black/65 hover:border-ink-black/40 hover:text-ink-black'}`}
                       >
                         {cat.label.split(' ')[0]}
                       </button>
@@ -467,7 +467,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                     <button
                       key={m}
                       onClick={() => { setMethod(m); reset(); }}
-                      className={`w-full px-4 py-3 border text-[10px] tracking-widest uppercase transition-all flex items-center justify-between ${method === m ? 'bg-ink-black text-white border-ink-black font-bold shadow-md' : 'border-ink-black/10 text-ink-black/60 hover:border-ink-black/30'}`}
+                      className={`w-full px-4 py-3 border text-[10px] tracking-widest uppercase transition-all flex items-center justify-between ${method === m ? 'bg-ink-black text-white border-ink-black font-bold shadow-md' : 'border-ink-black/25 text-ink-black/80 hover:border-ink-black/50'}`}
                     >
                       <span className="flex items-center gap-2">
                         {m === 'coin' && <Coins className="w-3 h-3" />}
@@ -1186,7 +1186,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                       <button
                         key={tab.id}
                         onClick={() => setTheoryTab(tab.id)}
-                        className={`w-full px-5 py-5 flex items-center gap-4 border text-[12px] tracking-widest transition-all ${theoryTab === tab.id ? 'bg-ink-black text-white border-ink-black shadow-lg' : 'border-ink-black/10 text-ink-black/60 hover:bg-ink-black/5'}`}
+                        className={`w-full px-5 py-5 flex items-center gap-4 border text-[12px] tracking-widest transition-all ${theoryTab === tab.id ? 'bg-ink-black text-white border-ink-black shadow-lg' : 'border-ink-black/25 text-ink-black/80 hover:bg-ink-black/5'}`}
                       >
                         {tab.icon} {tab.label}
                       </button>

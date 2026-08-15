@@ -143,7 +143,7 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                     <button
                       key={cat.id}
                       onClick={() => setSelectedCategory(cat.id)}
-                      className={`px-2 py-2 border text-[9px] tracking-tighter transition-all flex items-center gap-1 ${selectedCategory === cat.id ? 'bg-ink-black text-white border-ink-black' : 'border-ink-black/5 text-ink-black/30 hover:border-ink-black/20'}`}
+                      className={`px-2 py-2 border text-[9px] tracking-tighter transition-all flex items-center gap-1 ${selectedCategory === cat.id ? 'bg-ink-black text-white border-ink-black' : 'border-ink-black/20 text-ink-black/65 hover:border-ink-black/40 hover:text-ink-black'}`}
                     >
                       {cat.label.split(' ')[0]}
                     </button>
@@ -187,7 +187,7 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                     <button 
                       key={g.key}
                       onClick={() => setGender(g.key as any)}
-                      className={`py-3 border text-[10px] tracking-widest transition-all ${gender === g.key ? 'bg-ink-black text-white border-ink-black font-bold shadow-lg' : 'border-ink-black/10 text-ink-black/40 hover:border-ink-black/30'}`}
+                      className={`py-3 border text-[10px] tracking-widest transition-all ${gender === g.key ? 'bg-ink-black text-white border-ink-black font-bold shadow-lg' : 'border-ink-black/25 text-ink-black/75 hover:border-ink-black/50'}`}
                     >
                       {g.label}
                     </button>
