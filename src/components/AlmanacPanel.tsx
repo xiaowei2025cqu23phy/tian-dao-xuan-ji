@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { CalendarDays, Sparkles, ShieldAlert, Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { CalendarDays, Sparkles, ShieldAlert, Loader2, Share2, Copy, Check } from 'lucide-react';
+import { Lunar } from 'lunar-javascript';
 import { getTodayAlmanac, TimeSlot } from '../lib/almanac-service';
 import { interpretMetaphysics, AIConfig } from '../services/aiService';
+import { SharePosterModal, copyShareText } from './SharePoster';
 
 const SHI_CHEN = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
@@ -17,6 +19,41 @@ export default function AlmanacPanel({ aiConfig }: { aiConfig: AIConfig }) {
 
   const [qianReading, setQianReading] = useState('');
   const [qianLoading, setQianLoading] = useState(false);
+  const [showPoster, setShowPoster] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [countdown, setCountdown] = useState('');
+
+  // 节气倒计时（每分钟刷新）
+  useEffect(() => {
+    const tick = () => {
+      try {
+        const lunar = Lunar.fromDate(new Date());
+        const next = lunar.getNextJieQi(true);
+        if (!next) return;
+        const diff = next.getSolar().getCalendar().getTime() - Date.now();
+        if (diff <= 0) return;
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        setCountdown(`距「${next.getName()}」还有 ${d} 天 ${h} 时 ${m} 分`);
+      } catch {
+        setCountdown('');
+      }
+    };
+    tick();
+    const id = setInterval(tick, 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleCopyQian = async () => {
+    const ok = await copyShareText(
+      `今日卦签：第${data.qian.number}卦【${data.qian.hexName}】\n卦辞：${data.qian.judgement}\n象意：${data.qian.meaning}\n${data.qian.dateText} · 天道玄机`,
+    );
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    }
+  };
 
   const handleQianAI = async () => {
     if (qianLoading) return;
@@ -123,6 +160,7 @@ export default function AlmanacPanel({ aiConfig }: { aiConfig: AIConfig }) {
 
           <div className="p-4 bg-ink-black/[0.02] border border-ink-black/5 rounded-sm text-[10px] leading-relaxed text-ink-black/50 font-serif-sc">
             {data.currentJieQi ? `时值「${data.currentJieQi}」节气，天时流转，顺时而动。` : '天时平顺，宜静观其变。'}
+            {countdown && <div className="mt-1.5 text-imperial-red font-bold">{countdown}</div>}
           </div>
 
           {/* 今日卦签 */}
@@ -139,19 +177,47 @@ export default function AlmanacPanel({ aiConfig }: { aiConfig: AIConfig }) {
                 <p className="text-[10px] text-ink-black/45 font-serif-sc leading-relaxed">{data.qian.meaning}</p>
               </div>
             </div>
-            <button
-              onClick={handleQianAI}
-              disabled={qianLoading}
-              className="w-full py-2.5 bg-ink-black text-white text-[10px] tracking-[0.3em] font-bold uppercase hover:bg-imperial-red transition-all disabled:opacity-30 flex items-center justify-center gap-2"
-            >
-              {qianLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              {qianLoading ? '解签中...' : 'AI 解今日之签'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleQianAI}
+                disabled={qianLoading}
+                className="flex-1 py-2.5 bg-ink-black text-white text-[10px] tracking-[0.3em] font-bold uppercase hover:bg-imperial-red transition-all disabled:opacity-30 flex items-center justify-center gap-2"
+              >
+                {qianLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {qianLoading ? '解签中...' : 'AI 解今日之签'}
+              </button>
+              <button
+                onClick={() => setShowPoster(true)}
+                className="px-3 py-2.5 border border-ink-black/25 text-ink-black/75 text-[10px] font-bold uppercase hover:border-imperial-red/50 hover:text-imperial-red transition-all flex items-center justify-center gap-1.5"
+                title="生成分享海报"
+              >
+                <Share2 className="w-3 h-3" /> 海报
+              </button>
+              <button
+                onClick={handleCopyQian}
+                className="px-3 py-2.5 border border-ink-black/25 text-ink-black/75 text-[10px] font-bold uppercase hover:border-imperial-red/50 hover:text-imperial-red transition-all flex items-center justify-center gap-1.5"
+                title="复制签文"
+              >
+                {copied ? <Check className="w-3 h-3 text-[#2d5a27]" /> : <Copy className="w-3 h-3" />}
+                {copied ? '已复制' : '复制'}
+              </button>
+            </div>
             {qianReading && (
               <p className="text-[10px] text-ink-black/65 leading-relaxed font-serif-sc border-t border-imperial-red/10 pt-3 whitespace-pre-wrap">
                 {qianReading}
               </p>
             )}
+
+            <SharePosterModal
+              open={showPoster}
+              onClose={() => setShowPoster(false)}
+              props={{
+                title: `今日卦签 · 第${data.qian.number}卦 ${data.qian.hexName}`,
+                symbol: data.qian.symbol,
+                lines: [`卦辞：${data.qian.judgement}`, data.qian.meaning],
+                footer: `${data.qian.dateText} · 天道玄机`,
+              }}
+            />
           </div>
         </div>
 

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { calculateBazi, BaziData } from '../lib/lunar-service';
 import { FIVE_ELEMENTS_ADVICE } from '../lib/bazi-data';
+import { getShenSha, ShenShaHit } from '../lib/shensha';
+import { calcXiYong, XiYongResult } from '../lib/xiyong';
+import { getTwelveLiuYue, getCurrentLiuYue, getTodayLiuRi, LiuYueInfo, LiuRiInfo } from '../lib/fortune-flow';
 import { Calendar, User, Info, Loader2, Sparkles, RefreshCw, Send, MessageSquare, BookOpen, Clock } from 'lucide-react';
 import { interpretMetaphysics, getOfflineBaziAnalysis, AIConfig, ChatMessage, QUESTION_CATEGORIES } from '../services/aiService';
 
@@ -20,6 +23,12 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
   const [baseAnalysis, setBaseAnalysis] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [followUp, setFollowUp] = useState('');
+  const [shensha, setShensha] = useState<ShenShaHit[]>([]);
+  const [xiYong, setXiYong] = useState<XiYongResult | null>(null);
+  const [liuYue12, setLiuYue12] = useState<LiuYueInfo[]>([]);
+  const [liuRi, setLiuRi] = useState<LiuRiInfo | null>(null);
+  const [dayunAI, setDayunAI] = useState('');
+  const [dayunAILoading, setDayunAILoading] = useState(false);
 
   const handleCalculate = async () => {
     if (!date) return;
@@ -38,6 +47,14 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
       setResult(data);
       setBaseAnalysis(getOfflineBaziAnalysis(data.dayMaster));
       setChatHistory([]);
+      // 神煞 / 喜用神 / 流月流日
+      setShensha(getShenSha(data));
+      setXiYong(calcXiYong(data));
+      const now = new Date();
+      setLiuYue12(getTwelveLiuYue(now, data.dayMaster));
+      setLiuRi(getTodayLiuRi(data, now));
+      setDayunAI('');
+      setDayunAILoading(false);
     } catch (error) {
       console.error("Bazi calculation failed:", error);
       setError("排盘计算失败，请检查日期格式是否正确。");
@@ -93,6 +110,22 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
       setChatHistory([...newHistory, { role: 'assistant', content: `神谕后续连接异常: ${error.message || '未知错误'}` }]);
     }
     setAiLoading(false);
+  };
+
+  const handleDayunAI = async () => {
+    if (!result?.yun || dayunAILoading) return;
+    setDayunAILoading(true);
+    setDayunAI('');
+    const prompt = `请以命理大师“天道先生”的口吻，为以下八步大运逐一解读每步的人生主题与行事建议（每步 1-2 句，共 8 段，按顺序编号，总字数 300-450 字）：
+日主${result.dayMaster}${result.dayMasterElement}（${gender === 'male' ? '乾造' : '坤造'}），格局「${result.structure?.name}」，大运${result.yun.forward ? '顺行' : '逆行'}。
+${result.yun.periods.map((p, i) => `${i + 1}. ${p.ganZhi}运：${p.startAge}-${p.endAge}岁（${p.startYear}-${p.endYear}年）`).join('\n')}`;
+    try {
+      const text = await interpretMetaphysics(prompt, aiConfig);
+      setDayunAI(text || '天机不可尽泄。');
+    } catch (e: any) {
+      setDayunAI(`神谕连接异常：${e?.message || '未知错误'}`);
+    }
+    setDayunAILoading(false);
   };
 
   const getElementColor = (el: string) => {
@@ -580,6 +613,25 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                           </div>
                         </div>
                       )}
+
+                      <div className="pt-2">
+                        <button
+                          onClick={handleDayunAI}
+                          disabled={dayunAILoading}
+                          className="px-6 py-3 bg-ink-black text-white text-[10px] tracking-[0.3em] font-bold uppercase hover:bg-imperial-red transition-all disabled:opacity-30 flex items-center gap-2 shadow-lg"
+                        >
+                          {dayunAILoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                          {dayunAILoading ? '神谕推演中...' : 'AI 逐运解读'}
+                        </button>
+                        {dayunAI && (
+                          <div className="mt-4 p-5 bg-white/70 border border-imperial-red/10 rounded-sm">
+                            <div className="flex items-center gap-2 text-[10px] opacity-30 uppercase tracking-widest mb-3 font-bold">
+                              <Sparkles className="w-3 h-3" /> 大运神谕
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-ink-black/70 font-serif-sc whitespace-pre-wrap">{dayunAI}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -609,6 +661,116 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* 神煞星曜 */}
+                <div className="pt-12 border-t border-ink-black/10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-1.5 h-1.5 bg-imperial-red rotate-45" />
+                    <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">神煞星曜 (Shen Sha)</span>
+                  </div>
+                  {shensha.length > 0 ? (
+                    <div className="flex flex-wrap gap-2.5">
+                      {shensha.map((s, i) => (
+                        <div key={i} className="group relative px-3 py-2 bg-white/70 border border-ink-black/10 rounded-sm hover:border-imperial-red/40 transition-all cursor-help">
+                          <span className="text-[11px] font-bold text-ink-black/80">{s.name}</span>
+                          <span className="ml-1.5 text-[9px] text-imperial-red font-bold">{s.pillar}柱</span>
+                          <div className="absolute left-0 top-full mt-1.5 z-20 w-56 p-3 bg-white border border-imperial-red/20 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            <p className="text-[9px] text-ink-black/65 leading-relaxed font-serif-sc">{s.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] opacity-40 italic font-serif-sc">命局平和，未见显著神煞入命。</p>
+                  )}
+                </div>
+
+                {/* 喜用神与幸运元素 */}
+                {xiYong && (
+                  <div className="pt-12 border-t border-ink-black/10">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-1.5 h-1.5 bg-imperial-red rotate-45" />
+                      <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">喜用神与幸运元素 (Xi Yong)</span>
+                    </div>
+                    <div className="space-y-5">
+                      <div className="flex flex-wrap items-center gap-3 p-5 bg-imperial-red/[0.02] border border-imperial-red/10 rounded-sm">
+                        <span className={`px-3 py-1.5 text-[12px] font-bold tracking-widest text-white ${xiYong.strength === '身强' ? 'bg-[#a81f1f]' : xiYong.strength === '身弱' ? 'bg-[#1e3a8a]' : 'bg-[#7c512d]'}`}>
+                          {xiYong.strength}
+                        </span>
+                        <span className="text-[10px] text-ink-black/60 font-serif-sc leading-relaxed">{xiYong.strengthDesc}</span>
+                        <span className="ml-auto text-[11px] font-serif-sc">
+                          <span className="text-imperial-red font-bold">喜用 {xiYong.xiYong.join('、')}</span>
+                          {xiYong.jiShen.length > 0 && <span className="text-ink-black/40"> · 忌 {xiYong.jiShen.join('、')}</span>}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                        {[
+                          { label: '幸运数字', value: xiYong.luckyNumbers.join('、') },
+                          { label: '幸运颜色', value: xiYong.luckyColors.join('、') },
+                          { label: '吉利方位', value: xiYong.luckyDirections.join('、') },
+                          { label: '宜佩戴', value: xiYong.luckyGems.join('、') },
+                        ].map(l => (
+                          <div key={l.label} className="p-4 bg-white/70 border border-ink-black/5 rounded-sm">
+                            <div className="text-[9px] uppercase tracking-widest opacity-40 font-bold mb-2">{l.label}</div>
+                            <div className="text-[12px] font-bold text-ink-black/80 font-serif-sc leading-relaxed">{l.value || '—'}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-ink-black/55 leading-relaxed font-serif-sc p-4 bg-ink-black/[0.02] border-l-2 border-imperial-red/30 rounded-sm">
+                        {xiYong.advice}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 流月流日 */}
+                <div className="pt-12 border-t border-ink-black/10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-1.5 h-1.5 bg-imperial-red rotate-45" />
+                    <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">流月流日 (Current Trends)</span>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="flex flex-wrap gap-4">
+                      {(() => {
+                        const cur = getCurrentLiuYue(new Date(), result.dayMaster);
+                        return (
+                          <div className="flex-1 min-w-[220px] p-4 bg-imperial-red/[0.02] border border-imperial-red/10 rounded-sm">
+                            <div className="text-[9px] uppercase tracking-widest opacity-40 font-bold mb-2">当前流月（{cur.jieName}起）</div>
+                            <div className="flex items-baseline gap-3">
+                              <span className="font-brush text-3xl text-imperial-red">{cur.ganZhi}</span>
+                              <span className="text-[10px] font-bold text-ink-black/60">月干十神 · {cur.shiShen}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {liuRi && (
+                        <div className="flex-1 min-w-[220px] p-4 bg-ink-black/[0.02] border border-ink-black/5 rounded-sm">
+                          <div className="text-[9px] uppercase tracking-widest opacity-40 font-bold mb-2">今日流日（{liuRi.ganZhi}）</div>
+                          <p className="text-[10px] leading-relaxed text-ink-black/65 font-serif-sc">{liuRi.desc}</p>
+                          <span className="text-[9px] text-imperial-red font-bold mt-1 inline-block">日干十神 · {liuRi.shiShen}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {liuYue12.length > 0 && (
+                      <div>
+                        <span className="text-[9px] uppercase tracking-widest font-bold opacity-30 block mb-2">十二流月（自立春起）</span>
+                        <div className="overflow-x-auto custom-scrollbar pb-2">
+                          <div className="flex gap-2 min-w-max">
+                            {liuYue12.map((m, i) => (
+                              <div key={i} className="w-20 shrink-0 p-2.5 border rounded-sm text-center bg-white/60 border-ink-black/5">
+                                <div className="text-sm font-bold text-ink-black">{m.ganZhi}</div>
+                                <div className="text-[8px] text-ink-black/40 mt-0.5">{m.jieName}起</div>
+                                <div className="text-[8px] text-imperial-red font-bold mt-0.5">{m.shiShen}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

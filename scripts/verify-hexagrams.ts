@@ -16,6 +16,10 @@ import { calculateBazi, getShiShen } from '../src/lib/lunar-service.ts';
 import { getTodayAlmanac } from '../src/lib/almanac-service.ts';
 import { buildLiuYao } from '../src/lib/liuyao.ts';
 import { getShengXiaoRelations, calcHeHunScore, getZhiByShengXiao } from '../src/lib/hehun-service.ts';
+import { getShenSha } from '../src/lib/shensha.ts';
+import { calcXiYong } from '../src/lib/xiyong.ts';
+import { getTwelveLiuYue, getTodayLiuRi } from '../src/lib/fortune-flow.ts';
+import { getMonthZeri, scoreDay } from '../src/lib/zeri-service.ts';
 
 let failures = 0;
 const fail = (msg: string) => { failures++; console.error(`  ✗ ${msg}`); };
@@ -307,6 +311,38 @@ const hehunScore = calcHeHunScore(bz2, calculateBazi(new Date(1992, 7, 8, 20, 0)
 if (hehunScore.total < 30 || hehunScore.total > 98) fail(`合婚评分越界: ${hehunScore.total}`);
 if (hehunScore.items.length < 4) fail(`合婚明细不足: ${hehunScore.items.length}`);
 ok(`八字合婚评分 ${hehunScore.total} 分，明细 ${hehunScore.items.length} 项：「${hehunScore.verdict}」`);
+
+console.log('\n[10/8] 神煞 / 喜用神 / 流月流日 / 择吉日');
+// 神煞：1990-06-15 坤造（庚午年 辛亥日），辛日干 → 天乙贵人 午/寅（午在年、月柱 ✓）
+const ss = getShenSha(bz2);
+if (!ss.some(s => s.name === '天乙贵人')) fail('辛日主应见天乙贵人（午/寅）');
+if (ss.some(s => s.name === '空亡' && !s.pillar)) fail('空亡标注异常');
+ok(`神煞命中 ${ss.length} 个：${ss.slice(0, 6).map(s => `${s.name}(${s.pillar})`).join('、')}${ss.length > 6 ? '…' : ''}`);
+// 喜用神
+const xy = calcXiYong(bz2);
+if (!['身强', '身弱', '中和'].includes(xy.strength)) fail(`喜用神强度判定异常: ${xy.strength}`);
+if (xy.xiYong.length === 0 || xy.luckyNumbers.length === 0 || xy.luckyColors.length === 0) fail('喜用神幸运元素缺失');
+ok(`喜用神：${xy.strength}，喜${xy.xiYong.join('、')}，幸运数字${xy.luckyNumbers.join('、')}，色${xy.luckyColors.join('、')}，方位${xy.luckyDirections.join('、')}`);
+// 流月流日
+const ly12 = getTwelveLiuYue(new Date(2026, 0, 15), bz2.dayMaster);
+if (ly12.length !== 12) fail(`十二流月应为 12 个，实际 ${ly12.length}`);
+if (ly12[0].ganZhi.substring(1, 2) !== '寅') fail(`十二流月应从寅月起，实际首月 ${ly12[0].ganZhi}`);
+if (!ly12.every(m => m.ganZhi.length === 2 && m.shiShen)) fail('流月结构异常');
+const lr = getTodayLiuRi(bz2, new Date(2026, 0, 15));
+if (!lr.ganZhi || !lr.shiShen || !lr.desc) fail('流日信息缺失');
+ok(`十二流月完整（首月${ly12[0].ganZhi}·${ly12[0].jieName}）；今日流日 ${lr.ganZhi}：${lr.relations.length > 0 ? lr.relations.join('；') : '无冲合'}`);
+// 择吉日
+const daysInFeb2026 = 28;
+const zeri = getMonthZeri(2026, 2, '嫁娶');
+if (zeri.length !== daysInFeb2026) fail(`择日应返回 ${daysInFeb2026} 天，实际 ${zeri.length}`);
+if (zeri.some(z => z.score < 0 || z.score > 100)) fail('择日评分越界');
+const suitable = zeri.filter(z => z.suitable).length;
+if (suitable < 1) fail('2026-02 应存在适宜嫁娶之日');
+const top = zeri.filter(z => z.isTop);
+if (top.length !== Math.min(3, suitable)) fail(`上吉应 3 个或等于适宜数，实际 ${top.length}`);
+const single = scoreDay(new Date(2026, 1, 14), '嫁娶');
+if (!single.ganZhi || !single.lunarText) fail('单日评分异常');
+ok(`择吉日：2026-02 嫁娶宜日 ${suitable} 天，上吉 ${top.length} 天（最高 ${Math.max(...zeri.map(z => z.score))} 分）`);
 
 console.log('\n========================================');
 if (failures === 0) {

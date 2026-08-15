@@ -5,6 +5,7 @@ import { Lunar } from 'lunar-javascript';
 import BaziSection from './components/BaziSection';
 import IChingSection from './components/IChingSection';
 import HeHunSection from './components/HeHunSection';
+import ZeririSection from './components/ZeririSection';
 import AlmanacPanel from './components/AlmanacPanel';
 
 import AISettingsModal from './components/AISettingsModal';
@@ -17,7 +18,7 @@ const POETIC_MONTHS: Record<number, string> = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'bazi' | 'iching' | 'hehun'>('bazi');
+  const [activeTab, setActiveTab] = useState<'bazi' | 'iching' | 'hehun' | 'zeri'>('bazi');
   // 依当前时刻动态推算岁次与农历月（避免硬编码过时）
   const [era] = useState(() => {
     const l = Lunar.fromDate(new Date());
@@ -135,6 +136,12 @@ export default function App() {
             >
               合婚问姻
             </button>
+            <button
+               onClick={() => setActiveTab('zeri')}
+               className={`w-36 sm:w-44 md:w-64 py-5 transition-all text-[15px] tracking-[0.6em] font-bold relative z-10 ${activeTab === 'zeri' ? 'bg-ink-black text-white shadow-2xl scale-[1.02]' : 'text-ink-black/45 hover:text-ink-black/75'}`}
+            >
+              择吉日
+            </button>
           </div>
           
           <div className="hidden md:flex items-center gap-6 opacity-40 text-[11px] tracking-[0.5em] font-bold transition-all hover:opacity-100">
@@ -168,7 +175,7 @@ export default function App() {
               >
                 <IChingSection aiConfig={aiConfig} />
               </motion.div>
-            ) : (
+            ) : activeTab === 'hehun' ? (
               <motion.div
                 key="hehun"
                 initial={{ opacity: 0, y: 15 }}
@@ -177,6 +184,16 @@ export default function App() {
                 transition={{ duration: 0.4 }}
               >
                 <HeHunSection aiConfig={aiConfig} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="zeri"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.4 }}
+              >
+                <ZeririSection />
               </motion.div>
             )}
           </AnimatePresence>

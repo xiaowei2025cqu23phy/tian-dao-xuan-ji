@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Coins, Hash, Clock, Sparkles, Loader2, RefreshCw, Send, MessageSquare, BookOpen, Info, History, ArrowRight } from 'lucide-react';
+import { Coins, Hash, Clock, Sparkles, Loader2, RefreshCw, Send, MessageSquare, BookOpen, Info, History, ArrowRight, Share2 } from 'lucide-react';
 import { interpretMetaphysics, AIConfig, QUESTION_CATEGORIES, ChatMessage } from '../services/aiService';
 import { GET_HEX_BY_BINARY, Hexagram, getMutualHexagram, getTiYong, HEXAGRAMS_DATA, getLineDetails, LineDetail, getOppositeHexagram, getInverseHexagram } from '../lib/iching-data';
 import { buildLiuYao, LiuYaoResult, LIU_QIN_COLORS } from '../lib/liuyao';
 import { Lunar } from 'lunar-javascript';
+import { SharePosterModal } from './SharePoster';
 import { HeTu, Luoshu, BaguaCircle } from './CosmologyVisuals';
 
 type Line = {
@@ -61,6 +62,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
   const [selectedLineIdx, setSelectedLineIdx] = useState<number | null>(null);
   const [history, setHistory] = useState<DivinationHistoryItem[]>([]);
   const [liuYao, setLiuYao] = useState<LiuYaoResult | null>(null);
+  const [showPoster, setShowPoster] = useState(false);
   
   const [hexagram, setHexagram] = useState<{ 
     original: Hexagram; 
@@ -1199,6 +1201,13 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                             {aiLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                             开启深度卦解
                           </button>
+                          <button
+                            onClick={() => setShowPoster(true)}
+                            className="px-5 border border-ink-black/25 text-ink-black/75 hover:border-imperial-red hover:text-imperial-red transition-all flex items-center gap-2 text-[10px] font-bold tracking-widest"
+                            title="生成分享海报"
+                          >
+                            <Share2 className="w-4 h-4" /> 分享
+                          </button>
                           <button onClick={reset} className="px-6 border border-ink-black/20 hover:border-imperial-red transition-all text-ink-black/40 hover:text-imperial-red group">
                              <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
                           </button>
@@ -1613,6 +1622,23 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 卦象分享海报 */}
+      <SharePosterModal
+        open={showPoster && hexagram !== null}
+        onClose={() => setShowPoster(false)}
+        props={{
+          title: `${hexagram?.original.name}卦 · ${hexagram?.original.pinyin || ''}`,
+          symbol: hexagram?.original.symbol || '易',
+          lines: [
+            `卦辞：${hexagram?.original.judgement || ''}`,
+            hexagram?.original.meaning || '',
+            hexagram?.changed ? `之卦：${hexagram.changed.name}（${hexagram.changed.judgement}）` : '无变爻，静守本卦',
+            `体用：${hexagram?.tiYong.ti}(${hexagram?.tiYong.tiElement}) ${hexagram?.tiYong.relative} ${hexagram?.tiYong.yong}(${hexagram?.tiYong.yongElement})`,
+          ],
+          footer: `${new Date().toLocaleDateString()} · 天道玄机`,
+        }}
+      />
     </div>
   );
 }
