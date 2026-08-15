@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Info, Zap, Wind, Mountain, Sun, Waves, CloudRain, ShieldCheck } from 'lucide-react';
+import hetuUrl from '../assets/hetu.svg';
+import luoshuUrl from '../assets/luoshu-classic.svg';
+import baguaEarlierUrl from '../assets/bagua-earlier.svg';
+import baguaLaterUrl from '../assets/bagua-later.svg';
 
 const TRIGRAM_DETAILS: Record<string, {
   name: string;
@@ -25,61 +29,40 @@ const TRIGRAM_DETAILS: Record<string, {
   '坤': { name: '坤 (Kūn)', nature: '地', element: '土', attribute: '顺', symbol: '厚德载物，包容万象', family: '母', bodyPart: '腹', icon: <ShieldCheck className="w-4 h-4" />, relationHint: '主孕育与基础', prePosition: '正北', postPosition: '西南' }
 };
 
+/** 河图：经典黑白点阵图（一六居北水、二七居南火、三八居东木、四九居西金、五十居中土） */
 export function HeTu() {
-  const positions = [
-    { n: 1, pos: 'row-start-5 col-start-3', type: 'black' },
-    { n: 6, pos: 'row-start-5 col-start-3 translate-y-6', type: 'white' },
-    { n: 2, pos: 'row-start-1 col-start-3', type: 'black' },
-    { n: 7, pos: 'row-start-1 col-start-3 -translate-y-6', type: 'white' },
-    { n: 3, pos: 'row-start-3 col-start-1', type: 'black' },
-    { n: 8, pos: 'row-start-3 col-start-1 -translate-x-6', type: 'white' },
-    { n: 4, pos: 'row-start-3 col-start-5', type: 'black' },
-    { n: 9, pos: 'row-start-3 col-start-5 translate-x-6', type: 'white' },
-    { n: 5, pos: 'row-start-3 col-start-3', type: 'black' },
-    { n: 10, pos: 'row-start-3 col-start-3 scale-150 opacity-20', type: 'white' },
-  ];
-
   return (
-    <div className="relative w-full aspect-square max-w-[300px] mx-auto p-4 bg-white/40 rounded-full border border-ink-black/10 shadow-inner">
-      <div className="absolute inset-0 flex items-center justify-center opacity-[0.05]">
-        <div className="text-[120px] font-brush">河图</div>
+    <div className="relative w-full max-w-[340px] mx-auto">
+      <div className="bg-white/70 border border-ink-black/10 rounded-full shadow-inner p-3">
+        <img
+          src={hetuUrl}
+          alt="河图（一六共宗、二七同道、三八为朋、四九为友、五十同途）"
+          className="w-full h-auto rounded-full select-none"
+          draggable={false}
+        />
       </div>
-      <div className="relative z-10 grid grid-cols-5 grid-rows-5 gap-2 h-full">
-        {positions.map((p, i) => (
-          <div key={i} className={`flex gap-1 ${p.pos} items-center justify-center`}>
-            {Array.from({ length: p.n }).map((_, idx) => (
-              <div 
-                key={idx} 
-                className={`w-2 h-2 rounded-full shadow-sm ${p.type === 'white' ? 'bg-white border border-ink-black/20' : 'bg-ink-black'}`}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
+      <p className="text-center text-[9px] text-ink-black/40 mt-3 font-serif-sc tracking-widest">
+        天一生水，地二生火，天三生木，地四生金，天五生土 · 地六成水，天七成火，地八成木，天九成金，地十成土
+      </p>
     </div>
   );
 }
 
+/** 洛书：经典九宫幻方图（戴九履一，左三右七，二四为肩，六八为足，五居中央） */
 export function Luoshu() {
-  const grid = [
-    [4, 9, 2],
-    [3, 5, 7],
-    [8, 1, 6]
-  ];
-
   return (
-    <div className="relative w-full aspect-square max-w-[300px] mx-auto p-10 bg-white/40 border border-ink-black/10 shadow-inner rounded-sm">
-       <div className="absolute inset-0 flex items-center justify-center opacity-[0.05]">
-        <div className="text-[120px] font-brush">洛书</div>
+    <div className="relative w-full max-w-[340px] mx-auto">
+      <div className="bg-white/70 border border-ink-black/10 rounded-sm shadow-inner p-3">
+        <img
+          src={luoshuUrl}
+          alt="洛书九宫图"
+          className="w-full h-auto rounded-sm select-none"
+          draggable={false}
+        />
       </div>
-      <div className="grid grid-cols-3 grid-rows-3 h-full gap-4 relative z-10">
-        {grid.flat().map((n, i) => (
-          <div key={i} className="border border-ink-black/10 bg-white/60 flex items-center justify-center relative group shadow-sm">
-            <span className="text-3xl font-brush text-ink-black/80 group-hover:text-imperial-red transition-all font-bold">{n}</span>
-            <div className={`absolute inset-0 opacity-[0.02] ${n % 2 === 0 ? 'bg-imperial-red' : 'bg-amber-gold'}`} />
-          </div>
-        ))}
-      </div>
+      <p className="text-center text-[9px] text-ink-black/40 mt-3 font-serif-sc tracking-widest">
+        戴九履一，左三右七，二四为肩，六八为足，五居中央 · 纵横斜相加皆为十五
+      </p>
     </div>
   );
 }
@@ -88,12 +71,11 @@ export function BaguaCircle() {
   const [mode, setMode] = useState<'pre' | 'post'>('pre');
   const [selectedTrigram, setSelectedTrigram] = useState<string | null>(null);
 
-  // 顺时针排列（屏幕坐标顺时针：上→右上→右→右下→下→左下→左→左上）
-  // 先天八卦（南上北下）：乾南、兑东南、离东、震东北、坤北、艮西北、坎西、巽西南
+  // 先天八卦（南上北下，顺时针）：乾南、兑东南、离东、震东北、坤北、艮西北、坎西、巽西南
   const preHeaven = ['乾', '兑', '离', '震', '坤', '艮', '坎', '巽'];
   // 后天八卦：离南、坤西南、兑西、乾西北、坎北、艮东北、震东、巽东南
   const postHeaven = ['离', '坤', '兑', '乾', '坎', '艮', '震', '巽'];
-  
+
   const currentTrigrams = mode === 'pre' ? preHeaven : postHeaven;
   const currentDetails = selectedTrigram ? TRIGRAM_DETAILS[selectedTrigram] : null;
 
@@ -101,13 +83,13 @@ export function BaguaCircle() {
     <div className="space-y-8">
       {/* Mode Selector */}
       <div className="flex justify-center gap-2">
-        <button 
+        <button
           onClick={() => { setMode('pre'); setSelectedTrigram(null); }}
           className={`px-4 py-1.5 text-[10px] tracking-widest uppercase transition-all ${mode === 'pre' ? 'bg-imperial-red text-white shadow-md' : 'bg-ink-black/10 text-ink-black/75 hover:bg-ink-black/20'}`}
         >
           先天八卦
         </button>
-        <button 
+        <button
           onClick={() => { setMode('post'); setSelectedTrigram(null); }}
           className={`px-4 py-1.5 text-[10px] tracking-widest uppercase transition-all ${mode === 'post' ? 'bg-imperial-red text-white shadow-md' : 'bg-ink-black/10 text-ink-black/75 hover:bg-ink-black/20'}`}
         >
@@ -115,45 +97,34 @@ export function BaguaCircle() {
         </button>
       </div>
 
-      <div className="relative w-full aspect-square max-w-[320px] mx-auto flex items-center justify-center">
-        {/* Animated Rings */}
-        <div className="absolute inset-0 border border-ink-black/5 rounded-full animate-[spin_240s_linear_infinite]" />
-        <div className="absolute inset-4 border border-ink-black/10 rounded-full animate-[spin_120s_linear_infinite_reverse]" />
-        <div className="absolute inset-8 border border-ink-black/20 rounded-full animate-[spin_60s_linear_infinite]" />
-        
-        {/* Taiji Center */}
-        <div className="w-24 h-24 border border-imperial-red/20 rounded-full flex items-center justify-center shadow-xl bg-white/60 backdrop-blur-sm z-10">
-          <div className="w-12 h-12 bg-imperial-red/5 rounded-full blur-xl animate-pulse" />
-          <span className="font-brush text-2xl text-ink-black ink-glow">太极</span>
+      {/* 经典八卦方位图（Wikimedia Commons 公共领域图） */}
+      <div className="relative w-full max-w-[360px] mx-auto">
+        <div className="bg-white/70 border border-ink-black/10 rounded-full shadow-inner p-3">
+          <img
+            src={mode === 'pre' ? baguaEarlierUrl : baguaLaterUrl}
+            alt={mode === 'pre' ? '先天八卦方位图' : '后天八卦方位图'}
+            className="w-full h-auto rounded-full select-none"
+            draggable={false}
+          />
         </div>
 
-        {/* Trigrams Around the Circle */}
-        {currentTrigrams.map((t, i) => {
-          const angle = (i * 45) - 90;
-          const radius = 110;
-          const x = Math.cos((angle * Math.PI) / 180) * radius;
-          const y = Math.sin((angle * Math.PI) / 180) * radius;
-          
-          return (
-            <motion.div
-              key={`${mode}-${t}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
-              style={{ 
-                position: 'absolute',
-                left: `calc(50% + ${x}px)`,
-                top: `calc(50% + ${y}px)`,
-                transform: `translate(-50%, -50%) rotate(${angle + 90}deg)`
-              }}
+        {/* 卦名选择（点击查看详情） */}
+        <div className="flex flex-wrap justify-center gap-2 mt-5">
+          {currentTrigrams.map(t => (
+            <button
+              key={t}
               onClick={() => setSelectedTrigram(selectedTrigram === t ? null : t)}
-              className={`flex flex-col items-center cursor-pointer p-2 transition-all group ${selectedTrigram === t ? 'scale-125' : 'hover:scale-110'}`}
+              className={`w-10 h-10 flex items-center justify-center font-brush text-lg border transition-all ${
+                selectedTrigram === t
+                  ? 'bg-imperial-red text-white border-imperial-red shadow-lg scale-110'
+                  : 'bg-white/80 border-ink-black/20 text-ink-black/80 hover:border-imperial-red/50 hover:text-imperial-red'
+              }`}
+              title={`${t} · ${TRIGRAM_DETAILS[t].element}${TRIGRAM_DETAILS[t].nature}`}
             >
-              <span className={`text-2xl font-brush transition-colors ${selectedTrigram === t ? 'text-imperial-red' : 'text-ink-black group-hover:text-imperial-red/60'}`}>{t}</span>
-              <div className={`w-6 h-0.5 mt-1 transition-all ${selectedTrigram === t ? 'bg-imperial-red w-8' : 'bg-ink-black/20 group-hover:bg-imperial-red/20'}`} />
-            </motion.div>
-          );
-        })}
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Detailed Info Panel */}
@@ -174,6 +145,7 @@ export function BaguaCircle() {
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="text-sm font-brush text-imperial-red">{currentDetails.name}</h4>
                   <span className="text-[10px] bg-ink-black/5 px-2 py-0.5 text-ink-black/60 rounded-full">{currentDetails.element} ({currentDetails.nature})</span>
+                  <span className="text-[9px] opacity-40 font-bold">{mode === 'pre' ? `先天 ${currentDetails.prePosition}` : `后天 ${currentDetails.postPosition}`}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-y-2 gap-x-4">
                   <div className="space-y-0.5">
@@ -213,12 +185,12 @@ export function BaguaCircle() {
             </div>
           </motion.div>
         ) : (
-          <div className="p-12 flex flex-col items-center justify-center border border-dashed border-ink-black/10 rounded-sm">
+          <div className="p-10 flex flex-col items-center justify-center border border-dashed border-ink-black/10 rounded-sm">
             <Info className="w-4 h-4 text-ink-black/10 mb-2" />
-            <div className="text-ink-black/20 text-[10px] italic tracking-widest uppercase">
-              点击卦象图标，开启易理秘境
+            <div className="text-ink-black/25 text-[10px] italic tracking-widest uppercase">
+              点击下方卦名，开启易理秘境
             </div>
-            <p className="text-[9px] text-ink-black/15 mt-2 max-w-[200px] text-center">
+            <p className="text-[9px] text-ink-black/20 mt-2 max-w-[220px] text-center">
               先天为体 (The Essence), 后天为用 (The Application)。<br/>
               五行生克衍生六亲：官鬼、妻财、父母、兄弟、子孙。
             </p>
@@ -228,4 +200,3 @@ export function BaguaCircle() {
     </div>
   );
 }
-

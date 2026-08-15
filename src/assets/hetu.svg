@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" font-family="'Noto Serif SC','Ma Shan Zheng',serif">
+  <title>河图</title>
+  <desc>一六共宗居北水，二七同道居南火，三八为朋居东木，四九为友居西金，五十同途居中央土</desc>
+  <!-- 外环装饰 -->
+  <circle cx="200" cy="200" r="188" fill="none" stroke="#1c1d21" stroke-opacity="0.12" stroke-dasharray="4 6"/>
+  <circle cx="200" cy="200" r="178" fill="none" stroke="#a81f1f" stroke-opacity="0.18" stroke-width="2"/>
+  <!-- 方位五行标注 -->
+  <text x="200" y="30" text-anchor="middle" font-size="22" font-weight="bold" fill="#a81f1f">南 火</text>
+  <text x="200" y="392" text-anchor="middle" font-size="22" font-weight="bold" fill="#1c3f8f">北 水</text>
+  <text x="24" y="206" text-anchor="middle" font-size="22" font-weight="bold" fill="#2d5a27">东 木</text>
+  <text x="376" y="206" text-anchor="middle" font-size="22" font-weight="bold" fill="#8a6a3a">西 金</text>
+  <!-- 中央土 -->
+  <text x="200" y="258" text-anchor="middle" font-size="18" font-weight="bold" fill="#7c512d">中 土</text>
+
+  <!-- 黑点 -->
+  <g fill="#1c1d21">
+    <!-- 北 一 -->
+    <circle cx="200" cy="305" r="6"/>
+    <!-- 南 二 -->
+    <circle cx="194" cy="95" r="6"/><circle cx="206" cy="95" r="6"/>
+    <!-- 东 三 -->
+    <circle cx="80" cy="186" r="6"/><circle cx="80" cy="200" r="6"/><circle cx="80" cy="214" r="6"/>
+    <!-- 西 四 -->
+    <circle cx="306" cy="186" r="6"/><circle cx="320" cy="186" r="6"/><circle cx="306" cy="200" r="6"/><circle cx="320" cy="200" r="6"/>
+    <!-- 中 五 -->
+    <circle cx="200" cy="200" r="6"/>
+  </g>
+
+  <!-- 白点 -->
+  <g fill="#faf7ef" stroke="#1c1d21" stroke-width="1.2">
+    <!-- 北 六 -->
+    <circle cx="188" cy="335" r="6"/><circle cx="200" cy="335" r="6"/><circle cx="212" cy="335" r="6"/>
+    <circle cx="188" cy="349" r="6"/><circle cx="200" cy="349" r="6"/><circle cx="212" cy="349" r="6"/>
+    <!-- 南 七 -->
+    <circle cx="188" cy="62" r="6"/><circle cx="200" cy="62" r="6"/><circle cx="212" cy="62" r="6"/>
+    <circle cx="184" cy="76" r="6"/><circle cx="196" cy="76" r="6"/><circle cx="208" cy="76" r="6"/><circle cx="220" cy="76" r="6"/>
+    <!-- 东 八 -->
+    <circle cx="58" cy="180" r="6"/><circle cx="72" cy="180" r="6"/>
+    <circle cx="58" cy="193" r="6"/><circle cx="72" cy="193" r="6"/>
+    <circle cx="58" cy="206" r="6"/><circle cx="72" cy="206" r="6"/>
+    <circle cx="58" cy="219" r="6"/><circle cx="72" cy="219" r="6"/>
+    <!-- 西 九 -->
+    <circle cx="330" cy="180" r="6"/><circle cx="344" cy="180" r="6"/><circle cx="358" cy="180" r="6"/>
+    <circle cx="330" cy="194" r="6"/><circle cx="344" cy="194" r="6"/><circle cx="358" cy="194" r="6"/>
+    <circle cx="330" cy="208" r="6"/><circle cx="344" cy="208" r="6"/><circle cx="358" cy="208" r="6"/>
+    <!-- 中 十（环十） -->
+    <circle cx="200" cy="174" r="6"/><circle cx="223" cy="185" r="6"/><circle cx="226" cy="208" r="6"/>
+    <circle cx="211" cy="226" r="6"/><circle cx="189" cy="226" r="6"/><circle cx="174" cy="208" r="6"/>
+    <circle cx="177" cy="185" r="6"/>
+  </g>
+
+  <!-- 生数成数配对标注 -->
+  <g fill="#1c1d21" fill-opacity="0.55" font-size="12">
+    <text x="200" y="370" text-anchor="middle">一六共宗</text>
+    <text x="200" y="50" text-anchor="middle">二七同道</text>
+    <text x="38" y="244" text-anchor="middle">三八为朋</text>
+    <text x="362" y="244" text-anchor="middle">四九为友</text>
+    <text x="200" y="282" text-anchor="middle">五十同途</text>
+  </g>
+</svg>

@@ -213,7 +213,18 @@ npm run verify:hexagrams
 *   `vite.config.ts` 内置生产构建守卫：检测到非占位符的真实 `GEMINI_API_KEY` 时构建直接失败，杜绝密钥被内联进 JS 产物并推送到公开渠道。
 *   若曾在历史提交中误提交过密钥，请立即轮换（revoke）该密钥，而非仅删除文件。
 
-## 11. 结语
+## 11. 图片来源与许可 (Image Attribution)
+
+「易理图解」中的经典图来源如下：
+
+| 图片 | 来源 | 许可 |
+| --- | --- | --- |
+| 先天八卦方位图 (`src/assets/bagua-earlier.svg`) | Wikimedia Commons [File:Bagua-name-earlier.svg](https://commons.wikimedia.org/wiki/File:Bagua-name-earlier.svg)（作者 BenduKiwi / Machine Elf 1735） | CC BY-SA 3.0 / GFDL |
+| 后天八卦方位图 (`src/assets/bagua-later.svg`) | Wikimedia Commons [File:Bagua-name-later.svg](https://commons.wikimedia.org/wiki/File:Bagua-name-later.svg)（作者 BenduKiwi / Machine Elf 1735） | CC BY-SA 3.0 / GFDL |
+| 洛书九宫图 (`src/assets/luoshu-classic.svg`) | Wikimedia Commons [File:Lo4shu1 Magic Square.svg](https://commons.wikimedia.org/wiki/File:Lo4shu1_Magic_Square.svg)（作者 Lamassu Design Gurdjieff） | CC BY-SA 3.0 |
+| 河图 (`src/assets/hetu.svg`) | 本项目自绘（经典黑白点阵式） | 公共领域（自绘） |
+
+## 12. 结语
 
 “天道无常，随机而变。” 
 本项目不仅旨在提供一种预测功能，更希望在这个信息爆炸、选择焦虑的时代，通过古老智慧的理性重构，帮每一个人找回内心的宁静与笃定。无论结果是吉是凶，易经的精神永远在于那四个字：**自强不息**。
