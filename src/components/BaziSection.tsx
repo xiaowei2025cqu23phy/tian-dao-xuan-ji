@@ -90,8 +90,8 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
       } else {
         setChatHistory([{ role: 'assistant', content: '天机暂不可泄，建议查看下方基础解析。' }]);
       }
-    } catch (error: any) {
-      setChatHistory([{ role: 'assistant', content: `神谕连接异常: ${error.message || '未知错误'}` }]);
+    } catch (error) {
+      setChatHistory([{ role: 'assistant', content: `神谕连接异常: ${error instanceof Error ? error.message : '未知错误'}` }]);
     }
     setAiLoading(false);
   };
@@ -106,8 +106,8 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
       if (response) {
         setChatHistory([...newHistory, { role: 'assistant', content: response }]);
       }
-    } catch (error: any) {
-      setChatHistory([...newHistory, { role: 'assistant', content: `神谕后续连接异常: ${error.message || '未知错误'}` }]);
+    } catch (error) {
+      setChatHistory([...newHistory, { role: 'assistant', content: `神谕后续连接异常: ${error instanceof Error ? error.message : '未知错误'}` }]);
     }
     setAiLoading(false);
   };
@@ -122,8 +122,8 @@ ${result.yun.periods.map((p, i) => `${i + 1}. ${p.ganZhi}运：${p.startAge}-${p
     try {
       const text = await interpretMetaphysics(prompt, aiConfig);
       setDayunAI(text || '天机不可尽泄。');
-    } catch (e: any) {
-      setDayunAI(`神谕连接异常：${e?.message || '未知错误'}`);
+    } catch (e) {
+      setDayunAI(`神谕连接异常：${e instanceof Error ? e.message : '未知错误'}`);
     }
     setDayunAILoading(false);
   };
@@ -213,13 +213,13 @@ ${result.yun.periods.map((p, i) => `${i + 1}. ${p.ganZhi}运：${p.startAge}-${p
               <div className="pt-2">
                 <label className="text-[9px] uppercase tracking-[0.3em] opacity-40 block mb-4 font-bold">性别乾坤</label>
                 <div className="grid grid-cols-2 gap-3">
-                  {[
+                  {([
                     { key: 'male', label: '乾造 (男)' },
                     { key: 'female', label: '坤造 (女)' }
-                  ].map(g => (
+                  ] as const).map(g => (
                     <button 
                       key={g.key}
-                      onClick={() => setGender(g.key as any)}
+                      onClick={() => setGender(g.key)}
                       className={`py-3 border text-[10px] tracking-widest transition-all ${gender === g.key ? 'bg-ink-black text-white border-ink-black font-bold shadow-lg' : 'border-ink-black/25 text-ink-black/75 hover:border-ink-black/50'}`}
                     >
                       {g.label}

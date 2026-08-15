@@ -11,7 +11,7 @@
  *
  * 运行：npm run verify:hexagrams
  */
-import { HEXAGRAMS_DATA, GET_HEX_BY_BINARY, getMutualHexagram, getOppositeHexagram, getInverseHexagram, getTiYong, getLineDetails, TRIGRAMS } from '../src/lib/iching-data.ts';
+import { HEXAGRAMS_DATA, GET_HEX_BY_BINARY, getMutualHexagram, getOppositeHexagram, getInverseHexagram, getTiYong, getLineDetails, TRIGRAMS, TRIGRAM_NUM_TO_BINARY } from '../src/lib/iching-data.ts';
 import { calculateBazi, getShiShen } from '../src/lib/lunar-service.ts';
 import { getTodayAlmanac } from '../src/lib/almanac-service.ts';
 import { buildLiuYao } from '../src/lib/liuyao.ts';
@@ -297,6 +297,31 @@ if (zhenLiuYao.lines[0].ganZhi !== '庚子') fail(`震卦初爻纳甲应为庚�
 if (zhenLiuYao.lines[0].liuShen !== '白虎') fail(`庚日震卦初爻六神应为白虎，实际 ${zhenLiuYao.lines[0].liuShen}`);
 if (zhenLiuYao.lines[5].liuShen !== '腾蛇') fail(`庚日震卦上爻六神应为腾蛇，实际 ${zhenLiuYao.lines[5].liuShen}`);
 ok('六爻纳甲：乾/姤/震卦纳甲、六亲、世应、六神全部正确');
+// 起卦八卦映射（梅花易数数字/时间起卦的数据源）—— 回归校验：曾因兑(2)/巽(5)二进制颠倒导致 28/64 组合起错卦
+const TRIGRAM_NAMES: Record<number, string> = { 1: '乾', 2: '兑', 3: '离', 4: '震', 5: '巽', 6: '坎', 7: '艮', 8: '坤' };
+const nameToBin = Object.fromEntries(Object.entries(TRIGRAMS).map(([bin, meta]) => [meta.name, bin]));
+let trigramMapErrors = 0;
+for (const num of [1, 2, 3, 4, 5, 6, 7, 8]) {
+  if (TRIGRAM_NUM_TO_BINARY[num] !== nameToBin[TRIGRAM_NAMES[num]]) {
+    trigramMapErrors++;
+    fail(`先天数${num}（${TRIGRAM_NAMES[num]}）映射 ${TRIGRAM_NUM_TO_BINARY[num]} 与 TRIGRAMS 表 ${nameToBin[TRIGRAM_NAMES[num]]} 不一致`);
+  }
+}
+// 卦例抽查：上兑下乾=泽天夬(43)、上乾下兑=天泽履(10)
+const kui = GET_HEX_BY_BINARY(TRIGRAM_NUM_TO_BINARY[1] + TRIGRAM_NUM_TO_BINARY[2]);
+if (kui.name !== '夬' || kui.number !== 43) { trigramMapErrors++; fail(`上兑下乾应得泽天夬(43)，实际 ${kui.name}(${kui.number})`); }
+const lv = GET_HEX_BY_BINARY(TRIGRAM_NUM_TO_BINARY[2] + TRIGRAM_NUM_TO_BINARY[1]);
+if (lv.name !== '履' || lv.number !== 10) { trigramMapErrors++; fail(`上乾下兑应得天泽履(10)，实际 ${lv.name}(${lv.number})`); }
+// 全 64 组合与官方 TRIGRAMS 对照
+for (let u = 1; u <= 8; u++) {
+  for (let l = 1; l <= 8; l++) {
+    const actual = GET_HEX_BY_BINARY(TRIGRAM_NUM_TO_BINARY[l] + TRIGRAM_NUM_TO_BINARY[u]);
+    const expected = GET_HEX_BY_BINARY(nameToBin[TRIGRAM_NAMES[l]] + nameToBin[TRIGRAM_NAMES[u]]);
+    if (actual.name !== expected.name) { trigramMapErrors++; fail(`上${TRIGRAM_NAMES[u]}下${TRIGRAM_NAMES[l]}得${actual.name}，期望${expected.name}`); }
+  }
+}
+if (trigramMapErrors === 0) ok('起卦八卦映射：先天数序 1-8 与 TRIGRAMS 完全一致，64 种上下组合全部正确');
+else ok(`起卦八卦映射：发现 ${trigramMapErrors} 处不一致（详见上方 ✗）`);
 // 合婚
 const sx1 = getShengXiaoRelations('子', '丑');
 if (!sx1.some(r => r.type === '六合')) fail('子丑应六合');

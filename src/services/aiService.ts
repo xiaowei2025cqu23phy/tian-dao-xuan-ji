@@ -7,8 +7,8 @@ const getApiKey = (provider: AIProvider, userKey?: string) => {
 
   // 浏览器环境仅读取 Vite 注入的 VITE_ 环境变量；
   // 生产构建由 vite.config.ts 的安全守卫保证产物内不含真实密钥。
-  const env = (import.meta as any).env || {};
-  const keys: Partial<Record<AIProvider, string>> = {
+  const env = import.meta.env;
+  const keys: Partial<Record<AIProvider, string | undefined>> = {
     gemini: env.VITE_GEMINI_API_KEY,
     openai: env.VITE_OPENAI_API_KEY,
     deepseek: env.VITE_DEEPSEEK_API_KEY,
@@ -28,11 +28,18 @@ export interface AIConfig {
 export const DEFAULT_AI_CONFIG: AIConfig = {
   provider: 'gemini',
   apiKey: '', // Will fallback to process.env if empty
-  model: 'gemini-1.5-flash',
+  model: 'gemini-2.0-flash',
 };
 
-export const AI_PROVIDERS = [
-  { id: 'gemini', label: 'Google Gemini', defaultModel: 'gemini-1.5-flash' },
+export interface AIProviderOption {
+  id: AIProvider;
+  label: string;
+  defaultModel: string;
+  baseUrl?: string;
+}
+
+export const AI_PROVIDERS: AIProviderOption[] = [
+  { id: 'gemini', label: 'Google Gemini', defaultModel: 'gemini-2.0-flash' },
   { id: 'openai', label: 'ChatGPT (OpenAI)', defaultModel: 'gpt-4o-mini', baseUrl: 'https://api.openai.com/v1' },
   { id: 'deepseek', label: 'DeepSeek', defaultModel: 'deepseek-chat', baseUrl: 'https://api.deepseek.com' },
   { id: 'qwen', label: '阿里通义千问 (Qwen)', defaultModel: 'qwen-plus', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
@@ -125,7 +132,7 @@ export async function interpretMetaphysics(
     
     // Note: @google/genai uses this structure
     const response = await genAI.models.generateContent({
-      model: config.model || 'gemini-1.5-flash',
+      model: config.model || 'gemini-2.0-flash',
       contents: messages.map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }],
@@ -136,9 +143,9 @@ export async function interpretMetaphysics(
     });
 
     return response.text;
-  } catch (error: any) {
+  } catch (error) {
     console.error("Gemini Interpretation Error:", error);
-    throw new Error(error.message || "Gemini 神谕连接失败");
+    throw new Error(error instanceof Error ? error.message : "Gemini 神谕连接失败");
   }
 }
 

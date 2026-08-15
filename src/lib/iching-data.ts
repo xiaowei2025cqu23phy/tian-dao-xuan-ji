@@ -105,6 +105,22 @@ export const TRIGRAMS: Record<string, { name: string, element: string, nature: s
   '110': { name: '兑', element: '金', nature: '泽' },
 };
 
+/**
+ * 先天八卦数序 → 二进制（自下而上，与 TRIGRAMS 键一致）
+ * 乾1 兑2 离3 震4 巽5 坎6 艮7 坤8
+ * 供梅花易数「数字/时间起卦」使用，与 TRIGRAMS 保持单一数据源，避免起卦映射颠倒。
+ */
+export const TRIGRAM_NUM_TO_BINARY: Record<number, string> = {
+  1: '111', // 乾
+  2: '110', // 兑
+  3: '101', // 离
+  4: '100', // 震
+  5: '011', // 巽
+  6: '010', // 坎
+  7: '001', // 艮
+  8: '000', // 坤
+};
+
 export const HEXAGRAMS_DATA: Record<string, Partial<Hexagram>> = {
   '111111': { name: '乾', pinyin: 'Qián', symbol: '䷀', judgement: '元亨利贞。', meaning: '天行健，君子以自强不息。象征刚健中正。', number: 1, lines: ['潜龙勿用。', '见龙在田，利见大人。', '君子终日乾乾，夕惕若，无咎。', '或跃在渊，无咎。', '飞龙在天，利见大人。', '亢龙有悔。'] },
   '000000': { name: '坤', pinyin: 'Kūn', symbol: '䷁', judgement: '元亨，利牝马之贞。', meaning: '地势坤，君子以厚德载物。象征顺从宽厚。', number: 2, lines: ['履霜，坚冰至。', '直方大，不习无不利。', '含章可贞，或从王事，无成有终。', '括囊，无咎无誉。', '黄裳元吉。', '龙战于野，其血玄黄。'] },

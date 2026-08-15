@@ -41,14 +41,15 @@ export function getTwelveLiuYue(now: Date, dayMaster: string): LiuYueInfo[] {
     const gz = m.getMonthInGanZhiExact();
     list.push({ ganZhi: gz, jieName: jie, shiShen: getShiShen(dayMaster, gz.substring(0, 1)) });
   }
-  // 若表未含完整一轮（跨年），按当前月补齐
+  // 若表未含完整一轮（跨年或个别节气缺失），从已取到的位置起补齐尾部，
+  // 保持 jieName（JIE_ORDER）与干支（zhiSeq）逐位对齐，避免标签错位。
   if (list.length < 12) {
     const current = lunar.getMonthInGanZhiExact();
     const zhiSeq = ['寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥', '子', '丑'];
     const curIdx = zhiSeq.indexOf(current.substring(1, 2));
     const ganSeq = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
     const curGanIdx = ganSeq.indexOf(current.substring(0, 1));
-    for (let i = 0; i < 12; i++) {
+    for (let i = list.length; i < 12; i++) {
       const gz = ganSeq[(curGanIdx - curIdx + i + 120) % 10] + zhiSeq[i];
       list.push({ ganZhi: gz, jieName: JIE_ORDER[i], shiShen: getShiShen(dayMaster, gz.substring(0, 1)) });
     }

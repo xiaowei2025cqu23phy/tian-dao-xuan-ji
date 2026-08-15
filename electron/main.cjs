@@ -2,6 +2,20 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
+// 单实例锁：重复双击启动时聚焦已有窗口，避免开多窗
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getAllWindows()[0];
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    }
+  });
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1440,
@@ -26,8 +40,13 @@ function createWindow() {
     win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   }
 
-  // 拦截外部导航（保持单页应用）
+  // 拦截外部导航与新窗口（保持单页应用，防止离开 SPA 或被钓鱼页接管）
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (e, url) => {
+    const current = win.webContents.getURL();
+    // 仅放行应用自身页面（loadFile 的 file:// 或 dev server 同源地址）
+    if (url !== current && !url.startsWith('file://')) e.preventDefault();
+  });
 }
 
 app.whenReady().then(() => {

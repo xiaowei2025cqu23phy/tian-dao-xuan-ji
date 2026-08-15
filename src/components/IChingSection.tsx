@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Coins, Hash, Clock, Sparkles, Loader2, RefreshCw, Send, MessageSquare, BookOpen, Info, History, ArrowRight, Share2 } from 'lucide-react';
 import { interpretMetaphysics, AIConfig, QUESTION_CATEGORIES, ChatMessage } from '../services/aiService';
-import { GET_HEX_BY_BINARY, Hexagram, getMutualHexagram, getTiYong, HEXAGRAMS_DATA, getLineDetails, LineDetail, getOppositeHexagram, getInverseHexagram } from '../lib/iching-data';
+import { GET_HEX_BY_BINARY, Hexagram, getMutualHexagram, getTiYong, HEXAGRAMS_DATA, getLineDetails, LineDetail, getOppositeHexagram, getInverseHexagram, TRIGRAM_NUM_TO_BINARY } from '../lib/iching-data';
 import { buildLiuYao, LiuYaoResult, LIU_QIN_COLORS } from '../lib/liuyao';
 import { Lunar } from 'lunar-javascript';
 import { SharePosterModal } from './SharePoster';
@@ -108,7 +108,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
       hex.inverse = hex.inverse || GET_HEX_BY_BINARY(getInverseHexagram(bin));
     }
     
-    setHexagram(hex as any);
+    setHexagram({ ...hex, opposite: hex.opposite!, inverse: hex.inverse! });
     setSelectedCategory(item.category);
     setCustomQuestion(item.question);
     setChatHistory([]);
@@ -168,20 +168,8 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
     const lowerIdx = (n2 % 8) || 8;
     const movingLinePos = (n3 % 6) || 6; // 1-indexed from bottom
 
-    // Trigram binary (Bottom to top mapping) — 先天八卦数序：乾1 兑2 离3 震4 巽5 坎6 艮7 坤8
-    const trigramMap: Record<number, string> = {
-      1: '111', // Qian 乾
-      2: '011', // Dui 兑
-      3: '101', // Li 离
-      4: '100', // Zhen 震
-      5: '110', // Xun 巽
-      6: '010', // Kan 坎
-      7: '001', // Gen 艮
-      8: '000', // Kun 坤
-    };
-
-    const lowerBin = trigramMap[lowerIdx];
-    const upperBin = trigramMap[upperIdx];
+    const lowerBin = TRIGRAM_NUM_TO_BINARY[lowerIdx];
+    const upperBin = TRIGRAM_NUM_TO_BINARY[upperIdx];
     if (!lowerBin || !upperBin) return;
     const fullBinary = lowerBin + upperBin;
 
@@ -222,13 +210,8 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
     const lowerIdx = (n2 % 8) || 8;
     const movingLinePos = (n3 % 6) || 6;
 
-    const trigramMap: Record<number, string> = {
-      1: '111', 2: '011', 3: '101', 4: '100',
-      5: '110', 6: '010', 7: '001', 8: '000',
-    };
-
-    const lowerBin = trigramMap[lowerIdx];
-    const upperBin = trigramMap[upperIdx];
+    const lowerBin = TRIGRAM_NUM_TO_BINARY[lowerIdx];
+    const upperBin = TRIGRAM_NUM_TO_BINARY[upperIdx];
     if (!lowerBin || !upperBin) return;
     const fullBinary = lowerBin + upperBin;
 
@@ -374,8 +357,8 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
       } else {
         setChatHistory([{ role: 'assistant', content: '无法连接神谕，请查看下方基础卦解。' }]);
       }
-    } catch (error: any) {
-      setChatHistory([{ role: 'assistant', content: `神谕连接异常: ${error.message || '未知错误'}` }]);
+    } catch (error) {
+      setChatHistory([{ role: 'assistant', content: `神谕连接异常: ${error instanceof Error ? error.message : '未知错误'}` }]);
     }
     setAiLoading(false);
   };
@@ -390,8 +373,8 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
       if (response) {
         setChatHistory([...newHistory, { role: 'assistant', content: response }]);
       }
-    } catch (error: any) {
-      setChatHistory([...newHistory, { role: 'assistant', content: `神谕后续连接异常: ${error.message || '未知错误'}` }]);
+    } catch (error) {
+      setChatHistory([...newHistory, { role: 'assistant', content: `神谕后续连接异常: ${error instanceof Error ? error.message : '未知错误'}` }]);
     }
     setAiLoading(false);
   };
@@ -587,9 +570,9 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                     <div className="flex justify-center gap-4">
                       <button 
                         onClick={() => {
-                          const initialLines = Array(6).fill(null).map(() => ({ value: 7, type: 'yang', isMoving: false }));
-                          setLines(initialLines as any);
-                          calculateResult(initialLines as any);
+                          const initialLines: Line[] = Array.from({ length: 6 }, () => ({ value: 7, type: 'yang', isMoving: false }));
+                          setLines(initialLines);
+                          calculateResult(initialLines);
                         }}
                         className="text-[9px] px-3 py-1 border border-ink-black/20 hover:border-imperial-red transition-all uppercase tracking-widest"
                       >
@@ -936,7 +919,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                                  
                                  <div className="space-y-3">
                                    <div className="flex flex-wrap items-center gap-3">
-                                     <span className="text-[12px] font-bold font-brush text-imperial-red">第{['初', '二', '三', '四', '五', '上'][i]}爻 · {l.value === 6 ? '老阴' : '老阳'}动</span>
+                                     <span className="text-[12px] font-bold font-brush text-imperial-red">第{['初', '二', '三', '四', '五', '上'][i]}爻 · {l.type === 'yin' ? '老阴' : '老阳'}动</span>
                                      <div className="flex items-center gap-2 px-2 py-0.5 bg-ink-black/5 rounded-full">
                                        <span className="text-[9px] text-ink-black/40 uppercase">位:</span>
                                        <span className="text-[9px] font-bold text-ink-black/60">
@@ -953,7 +936,10 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                                    <div className="grid sm:grid-cols-2 gap-4">
                                      <div className="space-y-2">
                                        <p className="text-[12px] font-serif-sc font-bold text-ink-black/80">
-                                         {typeof hexagram.original.lines?.[i] === 'string' ? hexagram.original.lines?.[i] : (hexagram.original.lines?.[i] as any)?.text}
+                                         {(() => {
+                                            const raw = hexagram.original.lines?.[i];
+                                            return typeof raw === 'string' ? raw : (raw as LineDetail | undefined)?.text ?? '';
+                                          })()}
                                        </p>
                                        <p className="text-[10px] text-ink-black/50 leading-relaxed italic">
                                          此爻发动，预示局势于此点发生彻底的质变，打破原有本卦的宁静。

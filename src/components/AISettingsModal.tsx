@@ -56,7 +56,7 @@ export default function AISettingsModal({ isOpen, onClose, config, onSave }: AIS
                     key={p.id}
                     onClick={() => setLocalConfig({ 
                       ...localConfig, 
-                      provider: p.id as any, 
+                      provider: p.id, 
                       model: p.defaultModel,
                       baseUrl: p.baseUrl 
                     })}

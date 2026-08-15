@@ -115,8 +115,8 @@ export default function HeHunSection({ aiConfig }: { aiConfig: AIConfig }) {
     try {
       const text = await interpretMetaphysics(prompt, aiConfig);
       setAiText(text || '天机不可尽泄，谨记以诚相待。');
-    } catch (e: any) {
-      setAiText(`神谕连接异常：${e?.message || '未知错误'}`);
+    } catch (e) {
+      setAiText(`神谕连接异常：${e instanceof Error ? e.message : '未知错误'}`);
     }
     setAiLoading(false);
   };

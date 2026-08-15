@@ -68,8 +68,8 @@ export default function AlmanacPanel({ aiConfig }: { aiConfig: AIConfig }) {
         aiConfig,
       );
       setQianReading(text || '天机不可尽泄，谨记自强不息。');
-    } catch (e: any) {
-      setQianReading(`神谕连接异常：${e?.message || '未知错误'}`);
+    } catch (e) {
+      setQianReading(`神谕连接异常：${e instanceof Error ? e.message : '未知错误'}`);
     }
     setQianLoading(false);
   };
