@@ -7,10 +7,11 @@ import { join, dirname, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 
 const [token, releaseId, exePath, sizeMbRaw = '8'] = process.argv.slice(2);
-if (!token || !releaseId || !exePath) {
-  console.error('用法: node scripts/gitee-split-upload.mjs <token> <releaseId> <exePath> [partSizeMB]');
+if ((!token || !releaseId) && token !== 'skip') {
+  console.error('用法: node scripts/gitee-split-upload.mjs <token|skip> <releaseId> <exePath> [partSizeMB]');
   process.exit(1);
 }
+const SKIP_UPLOAD = token === 'skip';
 const sizeMb = parseInt(sizeMbRaw, 10) || 8;
 const partSize = sizeMb * 1024 * 1024;
 
@@ -82,6 +83,12 @@ async function uploadOne(fileName) {
 }
 
 let failed = 0;
+if (SKIP_UPLOAD) {
+  console.log('（skip 模式：仅拆分，未上传）');
+  console.log(`分卷目录: ${outDir}`);
+  console.log('上传方法：生成新令牌后运行 node scripts/gitee-split-upload.mjs <token> <releaseId> <exePath>');
+  process.exit(0);
+}
 for (const f of partFiles) {
   const ok = await uploadOne(f);
   if (!ok) failed++;
