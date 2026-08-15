@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Coins, Hash, Clock, Sparkles, Loader2, RefreshCw, Send, MessageSquare, BookOpen, Info, History, ArrowRight } from 'lucide-react';
 import { interpretMetaphysics, AIConfig, QUESTION_CATEGORIES, ChatMessage } from '../services/aiService';
 import { GET_HEX_BY_BINARY, Hexagram, getMutualHexagram, getTiYong, HEXAGRAMS_DATA, getLineDetails, LineDetail, getOppositeHexagram, getInverseHexagram } from '../lib/iching-data';
+import { buildLiuYao, LiuYaoResult, LIU_QIN_COLORS } from '../lib/liuyao';
 import { Lunar } from 'lunar-javascript';
 import { HeTu, Luoshu, BaguaCircle } from './CosmologyVisuals';
 
@@ -59,6 +60,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
   const [activeLineIdx, setActiveLineIdx] = useState<number | null>(null);
   const [selectedLineIdx, setSelectedLineIdx] = useState<number | null>(null);
   const [history, setHistory] = useState<DivinationHistoryItem[]>([]);
+  const [liuYao, setLiuYao] = useState<LiuYaoResult | null>(null);
   
   const [hexagram, setHexagram] = useState<{ 
     original: Hexagram; 
@@ -306,6 +308,10 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
     setHexagram(res);
     setStatus('finished');
 
+    // 纳甲六爻装卦：以起卦日天干定六神
+    const movingPositions = finalLines.map((l, i) => l.isMoving ? i : -1).filter(i => i >= 0);
+    setLiuYao(buildLiuYao(originalBinary, Lunar.fromDate(new Date()).getDayGan(), movingPositions));
+
     // Save to history
     saveToHistory({
       id: crypto.randomUUID(),
@@ -394,6 +400,7 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
     setChatHistory([]);
     setStatus('idle');
     setTimeInfo('');
+    setLiuYao(null);
   };
 
   return (
@@ -967,6 +974,46 @@ export default function IChingSection({ aiConfig }: { aiConfig: AIConfig }) {
                            </div>
                          )}
                       </div>
+
+                      {/* 纳甲六爻 */}
+                      {liuYao && (
+                        <div className="bg-white/70 border border-ink-black/10 p-6 space-y-5 shadow-xl relative overflow-hidden mt-6">
+                          <div className="lattice-corner lattice-tl opacity-5" />
+                          <div className="lattice-corner lattice-tr opacity-5" />
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-ink-black/10 pb-4 gap-3">
+                            <div className="space-y-1">
+                              <h3 className="text-sm font-bold tracking-widest uppercase text-ink-black/60">纳甲六爻 · {liuYao.palace}宫{liuYao.palaceElement} (Najia Six Lines)</h3>
+                              <p className="text-[10px] text-ink-black/40 font-serif-sc italic">世在{['初','二','三','四','五','上'][liuYao.shiPos]}爻 · 应在{['初','二','三','四','五','上'][liuYao.yingPos]}爻 · 六亲以宫五行为坐标</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] px-2 py-1 bg-imperial-red/10 text-imperial-red border border-imperial-red/20 font-bold">世</span>
+                              <span className="text-[10px] px-2 py-1 bg-ink-black/5 border border-ink-black/10 font-bold">应</span>
+                              <span className="text-[10px] px-2 py-1 bg-amber-gold/15 border border-amber-gold/30 font-bold">动</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            {[...liuYao.lines].reverse().map((l) => (
+                              <div key={l.position} className={`flex items-center gap-3 px-3 py-2 rounded-sm border text-[11px] transition-all ${l.isMoving ? 'bg-imperial-red/[0.04] border-imperial-red/25' : 'bg-ink-black/[0.015] border-ink-black/5'}`}>
+                                <span className="w-14 text-[9px] font-bold tracking-widest text-ink-black/45">{l.liuShen}</span>
+                                <span className="w-10 font-mono font-bold text-ink-black/80">{l.ganZhi}</span>
+                                <span className="w-6 text-[9px] text-ink-black/40">{l.element}</span>
+                                <span className={`w-12 font-bold ${LIU_QIN_COLORS[l.liuQin] || 'text-ink-black'}`}>{l.liuQin}</span>
+                                <span className="w-8 text-[9px] text-ink-black/35">{l.name}爻</span>
+                                <span className="flex-1 text-center text-sm">{l.type === 'yang' ? '⚊' : '⚋'}</span>
+                                <span className="w-16 flex justify-end gap-1.5">
+                                  {l.isShi && <span className="text-[9px] px-1.5 py-0.5 bg-imperial-red text-white font-bold rounded-sm">世</span>}
+                                  {l.isYing && <span className="text-[9px] px-1.5 py-0.5 bg-ink-black/10 text-ink-black/60 font-bold rounded-sm">应</span>}
+                                  {l.isMoving && <span className="text-[9px] px-1.5 py-0.5 bg-amber-gold/20 text-amber-gold font-bold rounded-sm">动</span>}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-ink-black/35 italic font-serif-sc leading-relaxed">
+                            纳甲筮法：以卦宫五行为“我”论六亲（生我为父母、同我为兄弟、我生为子孙、我克为妻财、克我为官鬼）；六神依起卦日天干定初爻，依次青龙、朱雀、勾陈、腾蛇、白虎、玄武。
+                          </p>
+                        </div>
+                      )}
 
                       {hexagram.changed && (
                         <div className="bg-imperial-red/[0.02] border-2 border-imperial-red/10 p-6 space-y-6 shadow-xl relative overflow-hidden mt-6">

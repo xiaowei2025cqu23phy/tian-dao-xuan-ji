@@ -286,7 +286,7 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
                       <div className="text-[180px] font-brush">命</div>
                    </div>
-                   <BaziColumn label="时柱" stem={result.hour.stem} branch={result.hour.branch} elementColor={getElementColor(result.hour.element)} naYin={result.hour.naYin} shiShen={result.hour.shiShen} />
+                   <BaziColumn label="时柱" stem={result.hour.stem} branch={result.hour.branch} elementColor={getElementColor(result.hour.element)} naYin={result.hour.naYin} shiShen={result.hour.shiShen} branchShiShen={result.hour.branchShiShen} />
                    <BaziColumn 
                       label="日柱" 
                       stem={result.day.stem} 
@@ -294,10 +294,11 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                       elementColor={getElementColor(result.day.element)} 
                       naYin={result.day.naYin}
                       shiShen={result.day.shiShen}
+                      branchShiShen={result.day.branchShiShen}
                       isMaster 
                     />
-                   <BaziColumn label="月柱" stem={result.month.stem} branch={result.month.branch} elementColor={getElementColor(result.month.element)} naYin={result.month.naYin} shiShen={result.month.shiShen} />
-                   <BaziColumn label="年柱" stem={result.year.stem} branch={result.year.branch} elementColor={getElementColor(result.year.element)} naYin={result.year.naYin} shiShen={result.year.shiShen} />
+                   <BaziColumn label="月柱" stem={result.month.stem} branch={result.month.branch} elementColor={getElementColor(result.month.element)} naYin={result.month.naYin} shiShen={result.month.shiShen} branchShiShen={result.month.branchShiShen} />
+                   <BaziColumn label="年柱" stem={result.year.stem} branch={result.year.branch} elementColor={getElementColor(result.year.element)} naYin={result.year.naYin} shiShen={result.year.shiShen} branchShiShen={result.year.branchShiShen} />
                 </div>
 
                 {/* Energy Landscape & Wu Xing Cycle */}
@@ -583,6 +584,34 @@ export default function BaziSection({ aiConfig }: { aiConfig: AIConfig }) {
                   </div>
                 )}
 
+                {/* 辅星三垣：胎元 / 命宫 / 身宫 / 胎息 */}
+                <div className="pt-12 border-t border-ink-black/10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-1.5 h-1.5 bg-imperial-red rotate-45" />
+                    <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">辅星三垣 (Auxiliary Stars)</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { key: 'taiYuan', label: '胎元', desc: '受胎之月，根基所系' },
+                      { key: 'mingGong', label: '命宫', desc: '命之所安，立命之宫' },
+                      { key: 'shenGong', label: '身宫', desc: '后天所养，行事之主' },
+                      { key: 'taiXi', label: '胎息', desc: '先天之气，禀赋所藏' },
+                    ].map(s => {
+                      const star = result.auxStars[s.key as keyof typeof result.auxStars];
+                      return (
+                        <div key={s.key} className="p-4 bg-white/70 border border-ink-black/5 rounded-sm hover:border-imperial-red/30 transition-all group">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-hover:opacity-70 transition-opacity">{s.label}</span>
+                            <span className="text-[8px] opacity-30 font-serif-sc">{s.desc}</span>
+                          </div>
+                          <div className="font-brush text-2xl text-imperial-red">{star.ganZhi}</div>
+                          <div className="text-[9px] text-ink-black/40 mt-1 font-serif-sc">{star.naYin}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="space-y-6 pt-12 border-t border-ink-black/10">
                   <div className="bg-imperial-red/[0.03] p-6 text-sm leading-loose text-ink-black/80 border-l-4 border-imperial-red relative italic font-serif-sc">
                      <p className="opacity-40 uppercase tracking-widest text-[10px] mb-2 font-bold text-imperial-red">伏羲基础卦解</p>
@@ -733,7 +762,7 @@ const BRANCH_INFO: Record<string, { element: string, nature: string, zodiac: str
   '亥': { element: '水', nature: '阴水', zodiac: '猪', hiddenStems: [{ stem: '壬', element: '水', strength: '70%', type: '本气' }, { stem: '甲', element: '木', strength: '30%', type: '中气' }], desc: '心旷神怡，待人真诚。', reference: '《尔雅》：岁在亥曰大渊献。' },
 };
 
-function BaziColumn({ label, stem, branch, elementColor, isMaster, naYin, shiShen }: { label: string, stem: string, branch: string, elementColor: string, isMaster?: boolean, naYin?: string, shiShen?: string }) {
+function BaziColumn({ label, stem, branch, elementColor, isMaster, naYin, shiShen, branchShiShen }: { label: string, stem: string, branch: string, elementColor: string, isMaster?: boolean, naYin?: string, shiShen?: string, branchShiShen?: string }) {
   const [showInfo, setShowInfo] = useState(false);
   const sInfo = STEM_INFO[stem];
   const bInfo = BRANCH_INFO[branch];
@@ -776,6 +805,11 @@ function BaziColumn({ label, stem, branch, elementColor, isMaster, naYin, shiShe
       <div className="mt-4 text-center space-y-1.5">
         <div className={`text-[10px] font-bold tracking-[0.3em] ${isMaster ? 'text-imperial-red' : 'text-ink-black/60'}`}>{shiShen || '—'}</div>
         <div className="text-[9px] text-ink-black/40 font-serif-sc tracking-wider">{naYin || ''}</div>
+        {branchShiShen && (
+          <div className="text-[8px] text-ink-black/35 tracking-wider">
+            藏{stem} · {branchShiShen}
+          </div>
+        )}
       </div>
 
       <AnimatePresence>

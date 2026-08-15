@@ -4,6 +4,7 @@ import { Settings } from 'lucide-react';
 import { Lunar } from 'lunar-javascript';
 import BaziSection from './components/BaziSection';
 import IChingSection from './components/IChingSection';
+import HeHunSection from './components/HeHunSection';
 import AlmanacPanel from './components/AlmanacPanel';
 
 import AISettingsModal from './components/AISettingsModal';
@@ -16,7 +17,7 @@ const POETIC_MONTHS: Record<number, string> = {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'bazi' | 'iching'>('bazi');
+  const [activeTab, setActiveTab] = useState<'bazi' | 'iching' | 'hehun'>('bazi');
   // 依当前时刻动态推算岁次与农历月（避免硬编码过时）
   const [era] = useState(() => {
     const l = Lunar.fromDate(new Date());
@@ -128,6 +129,12 @@ export default function App() {
             >
               周易起卦
             </button>
+            <button
+               onClick={() => setActiveTab('hehun')}
+               className={`w-36 sm:w-44 md:w-64 py-5 transition-all text-[15px] tracking-[0.6em] font-bold relative z-10 ${activeTab === 'hehun' ? 'bg-ink-black text-white shadow-2xl scale-[1.02]' : 'text-ink-black/45 hover:text-ink-black/75'}`}
+            >
+              合婚问姻
+            </button>
           </div>
           
           <div className="hidden md:flex items-center gap-6 opacity-40 text-[11px] tracking-[0.5em] font-bold transition-all hover:opacity-100">
@@ -151,7 +158,7 @@ export default function App() {
               >
                 <BaziSection aiConfig={aiConfig} />
               </motion.div>
-            ) : (
+            ) : activeTab === 'iching' ? (
               <motion.div
                 key="iching"
                 initial={{ opacity: 0, y: 15 }}
@@ -161,12 +168,22 @@ export default function App() {
               >
                 <IChingSection aiConfig={aiConfig} />
               </motion.div>
+            ) : (
+              <motion.div
+                key="hehun"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.4 }}
+              >
+                <HeHunSection aiConfig={aiConfig} />
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
       </main>
 
-      <AlmanacPanel />
+      <AlmanacPanel aiConfig={aiConfig} />
 
       <footer className="w-full max-w-7xl px-12 py-12 flex flex-col md:flex-row justify-between items-center gap-8 z-10 border-t border-dark-gold/10 mt-12 bg-white/20 backdrop-blur-sm">
         <div className="flex flex-wrap justify-center gap-8 text-[10px] tracking-[0.3em] font-bold uppercase opacity-50">

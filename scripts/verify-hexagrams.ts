@@ -14,6 +14,8 @@
 import { HEXAGRAMS_DATA, GET_HEX_BY_BINARY, getMutualHexagram, getOppositeHexagram, getInverseHexagram, getTiYong, getLineDetails, TRIGRAMS } from '../src/lib/iching-data.ts';
 import { calculateBazi, getShiShen } from '../src/lib/lunar-service.ts';
 import { getTodayAlmanac } from '../src/lib/almanac-service.ts';
+import { buildLiuYao } from '../src/lib/liuyao.ts';
+import { getShengXiaoRelations, calcHeHunScore, getZhiByShengXiao } from '../src/lib/hehun-service.ts';
 
 let failures = 0;
 const fail = (msg: string) => { failures++; console.error(`  ✗ ${msg}`); };
@@ -255,6 +257,56 @@ const posKeys = Object.keys(almanac.positions);
 if (posKeys.length !== 5 || posKeys.some(k => !almanac.positions[k as keyof typeof almanac.positions])) fail('黄历神煞方位缺失');
 if (!almanac.zhiXing || !almanac.tianShen || !almanac.tianShenType) fail('黄历值星/天神缺失');
 ok(`今日黄历：${almanac.lunarDate} ${almanac.dayGanZhi}日，宜[${almanac.yi.slice(0, 3).join('、')}${almanac.yi.length > 3 ? '…' : ''}]，${almanac.tianShen}(${almanac.tianShenType})`);
+
+console.log('\n[9/8] 辅星 / 藏干十神 / 吉时 / 卦签 / 六爻纳甲 / 合婚');
+// 辅星三垣
+if (!bz2.auxStars.taiYuan.ganZhi || !bz2.auxStars.taiYuan.naYin) fail('胎元缺失');
+if (!bz2.auxStars.mingGong.ganZhi) fail('命宫缺失');
+if (!bz2.auxStars.shenGong.ganZhi) fail('身宫缺失');
+if (!bz2.auxStars.taiXi.ganZhi) fail('胎息缺失');
+ok(`辅星：胎元${bz2.auxStars.taiYuan.ganZhi}(${bz2.auxStars.taiYuan.naYin}) 命宫${bz2.auxStars.mingGong.ganZhi} 身宫${bz2.auxStars.shenGong.ganZhi} 胎息${bz2.auxStars.taiXi.ganZhi}`);
+// 藏干十神
+for (const [label, p] of [['年', bz2.year], ['月', bz2.month], ['日', bz2.day], ['时', bz2.hour]] as const) {
+  if (!p.branchShiShen) fail(`${label}柱地支藏干十神缺失`);
+}
+ok('四柱地支藏干十神完整');
+// 吉时与卦签
+if (almanac.timeSlots.length !== 12) fail(`吉时表应为 12 时辰，实际 ${almanac.timeSlots.length}`);
+if (!almanac.timeSlots.every(t => t.zhi && t.range && Array.isArray(t.yi))) fail('吉时表结构异常');
+if (!almanac.qian.hexName || !almanac.qian.judgement || almanac.qian.number < 1 || almanac.qian.number > 64) fail('今日卦签异常');
+ok(`吉时表 12 时辰完整；今日卦签：第${almanac.qian.number}卦 ${almanac.qian.hexName}「${almanac.qian.judgement}」`);
+// 六爻纳甲
+const qianLiuYao = buildLiuYao('111111', '甲', []);
+const NAJIA_QIAN = ['甲子', '甲寅', '甲辰', '壬午', '壬申', '壬戌'];
+if (qianLiuYao.lines.map(l => l.ganZhi).join(',') !== NAJIA_QIAN.join(',')) fail(`乾卦纳甲错误: ${qianLiuYao.lines.map(l => l.ganZhi).join(',')}`);
+if (qianLiuYao.palace !== '乾' || qianLiuYao.palaceElement !== '金') fail(`乾卦应属乾宫金，实际 ${qianLiuYao.palace}宫${qianLiuYao.palaceElement}`);
+if (qianLiuYao.shiPos !== 5 || qianLiuYao.yingPos !== 2) fail(`乾卦世应在五二爻，实际世${qianLiuYao.shiPos}应${qianLiuYao.yingPos}`);
+const qianLiuQins = qianLiuYao.lines.map(l => l.liuQin);
+if (qianLiuQins.join(',') !== '子孙,妻财,父母,官鬼,兄弟,父母') fail(`乾宫金六亲错误: ${qianLiuQins.join(',')}`);
+if (qianLiuYao.lines[0].liuShen !== '青龙') fail(`甲日乾卦初爻六神应为青龙，实际 ${qianLiuYao.lines[0].liuShen}`);
+const gouLiuYao = buildLiuYao('011111', '甲', [1]);
+if (gouLiuYao.lines[0].ganZhi !== '辛丑') fail(`姤卦初爻纳甲应为辛丑，实际 ${gouLiuYao.lines[0].ganZhi}`);
+if (gouLiuYao.palace !== '乾' || gouLiuYao.shiPos !== 0 || gouLiuYao.yingPos !== 3) fail(`姤卦应属乾宫一世卦（世初应四），实际 ${gouLiuYao.palace}宫世${gouLiuYao.shiPos}应${gouLiuYao.yingPos}`);
+if (!gouLiuYao.lines[1].isMoving) fail('姤卦二爻动标记缺失');
+const zhenLiuYao = buildLiuYao('100100', '庚', []);
+if (zhenLiuYao.lines[0].ganZhi !== '庚子') fail(`震卦初爻纳甲应为庚子，实际 ${zhenLiuYao.lines[0].ganZhi}`);
+if (zhenLiuYao.lines[0].liuShen !== '白虎') fail(`庚日震卦初爻六神应为白虎，实际 ${zhenLiuYao.lines[0].liuShen}`);
+if (zhenLiuYao.lines[5].liuShen !== '腾蛇') fail(`庚日震卦上爻六神应为腾蛇，实际 ${zhenLiuYao.lines[5].liuShen}`);
+ok('六爻纳甲：乾/姤/震卦纳甲、六亲、世应、六神全部正确');
+// 合婚
+const sx1 = getShengXiaoRelations('子', '丑');
+if (!sx1.some(r => r.type === '六合')) fail('子丑应六合');
+const sx2 = getShengXiaoRelations('子', '午');
+if (!sx2.some(r => r.type === '六冲')) fail('子午应六冲');
+const sx3 = getShengXiaoRelations('申', '辰');
+if (!sx3.some(r => r.type === '三合')) fail('申辰应三合');
+const sx4 = getShengXiaoRelations('寅', '巳');
+if (!sx4.some(r => r.type === '相害')) fail('寅巳应相害');
+ok(`生肖关系：子丑六合、子午六冲、申辰三合、寅巳相害 验证通过（${getZhiByShengXiao('鼠')}）`);
+const hehunScore = calcHeHunScore(bz2, calculateBazi(new Date(1992, 7, 8, 20, 0), 'male'));
+if (hehunScore.total < 30 || hehunScore.total > 98) fail(`合婚评分越界: ${hehunScore.total}`);
+if (hehunScore.items.length < 4) fail(`合婚明细不足: ${hehunScore.items.length}`);
+ok(`八字合婚评分 ${hehunScore.total} 分，明细 ${hehunScore.items.length} 项：「${hehunScore.verdict}」`);
 
 console.log('\n========================================');
 if (failures === 0) {

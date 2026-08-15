@@ -6,6 +6,19 @@ export interface PillarInfo {
   element: string;
   naYin: string;
   shiShen: string;
+  branchShiShen: string; // 地支本气藏干的十神
+}
+
+export interface AuxStar {
+  ganZhi: string;
+  naYin: string;
+}
+
+export interface AuxStars {
+  taiYuan: AuxStar; // 胎元
+  taiXi: AuxStar;   // 胎息
+  mingGong: AuxStar; // 命宫
+  shenGong: AuxStar; // 身宫
 }
 
 export interface DaYunPeriod {
@@ -41,6 +54,7 @@ export interface BaziData {
   dayMasterAnalysis: string;
   shengXiao: string;
   missingElements: string[];
+  auxStars: AuxStars;
   monthCommand: {
     branch: string;
     element: string;
@@ -241,16 +255,22 @@ export function calculateBazi(date: Date, gender: 'male' | 'female'): BaziData {
   }
 
   return {
-    year: { ...year, element: year.stemElement, naYin: eightChar.getYearNaYin(), shiShen: getShiShen(day.stem, year.stem) },
-    month: { ...month, element: month.stemElement, naYin: eightChar.getMonthNaYin(), shiShen: getShiShen(day.stem, month.stem) },
-    day: { ...day, element: day.stemElement, naYin: eightChar.getDayNaYin(), shiShen: '日主' },
-    hour: { ...hour, element: hour.stemElement, naYin: eightChar.getTimeNaYin(), shiShen: getShiShen(day.stem, hour.stem) },
+    year: { ...year, element: year.stemElement, naYin: eightChar.getYearNaYin(), shiShen: getShiShen(day.stem, year.stem), branchShiShen: eightChar.getYearShiShenZhi()[0] || '' },
+    month: { ...month, element: month.stemElement, naYin: eightChar.getMonthNaYin(), shiShen: getShiShen(day.stem, month.stem), branchShiShen: eightChar.getMonthShiShenZhi()[0] || '' },
+    day: { ...day, element: day.stemElement, naYin: eightChar.getDayNaYin(), shiShen: '日主', branchShiShen: eightChar.getDayShiShenZhi()[0] || '' },
+    hour: { ...hour, element: hour.stemElement, naYin: eightChar.getTimeNaYin(), shiShen: getShiShen(day.stem, hour.stem), branchShiShen: eightChar.getTimeShiShenZhi()[0] || '' },
     fiveElements: fiveElementsCount,
     dayMaster: day.stem,
     dayMasterElement: dmElement,
     dayMasterAnalysis: `日主${day.stem}，五行属${dmElement}。`,
     shengXiao: SHENG_XIAO[year.branch] || '',
     missingElements,
+    auxStars: {
+      taiYuan: { ganZhi: eightChar.getTaiYuan(), naYin: eightChar.getTaiYuanNaYin() },
+      taiXi: { ganZhi: eightChar.getTaiXi(), naYin: eightChar.getTaiXiNaYin() },
+      mingGong: { ganZhi: eightChar.getMingGong(), naYin: eightChar.getMingGongNaYin() },
+      shenGong: { ganZhi: eightChar.getShenGong(), naYin: eightChar.getShenGongNaYin() },
+    },
     monthCommand: {
       branch: month.branch,
       element: ELEMENT_MAP[month.branch],

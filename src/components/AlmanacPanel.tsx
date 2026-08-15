@@ -1,10 +1,41 @@
 import React, { useState } from 'react';
-import { CalendarDays, Sparkles, ShieldAlert } from 'lucide-react';
-import { getTodayAlmanac } from '../lib/almanac-service';
+import { CalendarDays, Sparkles, ShieldAlert, Loader2 } from 'lucide-react';
+import { getTodayAlmanac, TimeSlot } from '../lib/almanac-service';
+import { interpretMetaphysics, AIConfig } from '../services/aiService';
 
-export default function AlmanacPanel() {
+const SHI_CHEN = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+/** 当前小时对应的时辰地支 */
+function currentShiZhi(hour: number): string {
+  return SHI_CHEN[Math.floor(((hour + 1) % 24) / 2)];
+}
+
+export default function AlmanacPanel({ aiConfig }: { aiConfig: AIConfig }) {
   const [data] = useState(() => getTodayAlmanac());
   const isHuangDao = data.tianShenType === '黄道';
+  const nowZhi = currentShiZhi(new Date().getHours());
+
+  const [qianReading, setQianReading] = useState('');
+  const [qianLoading, setQianLoading] = useState(false);
+
+  const handleQianAI = async () => {
+    if (qianLoading) return;
+    setQianLoading(true);
+    setQianReading('');
+    try {
+      const text = await interpretMetaphysics(
+        `我今日（${data.qian.dateText}）于“天道玄机”抽得第${data.qian.number}卦【${data.qian.hexName}卦】：
+        卦辞：${data.qian.judgement}
+        象意：${data.qian.meaning}
+        请以“天道先生”的身份，为我解读今日之签运，给出简要的当日行动建议与心境指引（150-300字）。`,
+        aiConfig,
+      );
+      setQianReading(text || '天机不可尽泄，谨记自强不息。');
+    } catch (e: any) {
+      setQianReading(`神谕连接异常：${e?.message || '未知错误'}`);
+    }
+    setQianLoading(false);
+  };
 
   const positions: { key: keyof typeof data.positions; label: string }[] = [
     { key: 'xi', label: '喜神' },
@@ -13,6 +44,35 @@ export default function AlmanacPanel() {
     { key: 'yangGui', label: '阳贵' },
     { key: 'yinGui', label: '阴贵' },
   ];
+
+  const renderSlot = (slot: TimeSlot) => {
+    const isNow = slot.zhi === nowZhi;
+    return (
+      <div
+        key={slot.zhi}
+        className={`p-2.5 border rounded-sm text-[9px] transition-all ${isNow ? 'bg-imperial-red/[0.06] border-imperial-red/30 shadow-sm' : 'bg-white/60 border-ink-black/5'}`}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <span className={`font-bold tracking-widest ${isNow ? 'text-imperial-red' : 'text-ink-black/70'}`}>{slot.zhi}时</span>
+          {isNow && <span className="text-[8px] text-imperial-red font-bold">今</span>}
+        </div>
+        <div className="text-[8px] text-ink-black/35 font-mono mb-1.5">{slot.range}</div>
+        {slot.yi.length > 0 && (
+          <div className="leading-relaxed text-[#2d5a27]">
+            <span className="font-bold">宜</span> {slot.yi.join(' ')}
+          </div>
+        )}
+        {slot.ji.length > 0 && (
+          <div className="leading-relaxed text-ink-black/40 mt-0.5">
+            <span className="font-bold">忌</span> {slot.ji.join(' ')}
+          </div>
+        )}
+        <div className="text-[8px] text-ink-black/30 mt-1">
+          {slot.tianShen} · {slot.tianShenType}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <section className="scroll-surface w-full max-w-7xl px-6 md:px-12 py-10 md:py-12 relative overflow-hidden z-10">
@@ -28,7 +88,7 @@ export default function AlmanacPanel() {
       </div>
 
       <div className="grid lg:grid-cols-12 gap-10">
-        {/* 左侧：日期主信息 */}
+        {/* 左侧：日期主信息 + 今日卦签 */}
         <div className="lg:col-span-4 space-y-6">
           <div className="flex items-start gap-4">
             <div className="text-6xl font-brush text-imperial-red leading-none">{data.dayGanZhi}</div>
@@ -64,9 +124,38 @@ export default function AlmanacPanel() {
           <div className="p-4 bg-ink-black/[0.02] border border-ink-black/5 rounded-sm text-[10px] leading-relaxed text-ink-black/50 font-serif-sc">
             {data.currentJieQi ? `时值「${data.currentJieQi}」节气，天时流转，顺时而动。` : '天时平顺，宜静观其变。'}
           </div>
+
+          {/* 今日卦签 */}
+          <div className="p-5 bg-imperial-red/[0.02] border border-imperial-red/10 rounded-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-imperial-red" />
+              <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-imperial-red">今日卦签 · DAILY QIAN</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-6xl font-calligraphy text-ink-black leading-none">{data.qian.symbol}</div>
+              <div className="space-y-1">
+                <div className="text-xl font-brush text-ink-black">第{data.qian.number}卦 · {data.qian.hexName}</div>
+                <p className="text-[11px] text-ink-black/60 font-serif-sc italic leading-relaxed">{data.qian.judgement}</p>
+                <p className="text-[10px] text-ink-black/45 font-serif-sc leading-relaxed">{data.qian.meaning}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleQianAI}
+              disabled={qianLoading}
+              className="w-full py-2.5 bg-ink-black text-white text-[10px] tracking-[0.3em] font-bold uppercase hover:bg-imperial-red transition-all disabled:opacity-30 flex items-center justify-center gap-2"
+            >
+              {qianLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {qianLoading ? '解签中...' : 'AI 解今日之签'}
+            </button>
+            {qianReading && (
+              <p className="text-[10px] text-ink-black/65 leading-relaxed font-serif-sc border-t border-imperial-red/10 pt-3 whitespace-pre-wrap">
+                {qianReading}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* 右侧：宜忌与吉神凶煞 */}
+        {/* 右侧：宜忌 / 吉神凶煞 / 吉时 */}
         <div className="lg:col-span-8 space-y-6">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="p-5 bg-imperial-red/[0.03] border border-imperial-red/10 rounded-sm">
@@ -132,6 +221,17 @@ export default function AlmanacPanel() {
               <span className="font-serif-sc leading-relaxed">
                 {positions.map(p => `${p.label}${data.positions[p.key] || '?'}`).join(' · ')}
               </span>
+            </div>
+          </div>
+
+          {/* 十二时辰吉时表 */}
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-1.5 h-1.5 bg-imperial-red rotate-45" />
+              <span className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-50">十二时辰吉凶 · TIME SLOTS</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+              {data.timeSlots.map(renderSlot)}
             </div>
           </div>
         </div>
