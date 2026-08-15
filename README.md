@@ -181,6 +181,8 @@
 ---
 ## 8. 本地部署与运行指南 (Local Development)
 
+> 📦 免费部署教程（Gitee Pages / GitHub Pages / EdgeOne / Vercel）：见 **[DEPLOY.md](./DEPLOY.md)**
+
 如果您希望在本地环境运行“天道玄机”项目，请参考以下操作流程：
 
 ### 8.1 环境要求
