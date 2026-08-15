@@ -1,0 +1,32 @@
+{
+  "name": "天道玄机 · 命理与占卜系统",
+  "short_name": "天道玄机",
+  "description": "八字排盘、周易起卦、合婚问姻、择吉日与每日黄历——中华传统国学的数字化演绎",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#faf7ef",
+  "theme_color": "#a81f1f",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

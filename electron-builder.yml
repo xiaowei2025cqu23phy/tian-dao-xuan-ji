@@ -1,0 +1,21 @@
+appId: com.tiandaoxuanji.app
+productName: 天道玄机
+copyright: © 2026 物理学渣小微
+directories:
+  output: release
+files:
+  - dist/**
+  - electron/**
+  - build/icon.png
+  - package.json
+win:
+  target:
+    - nsis
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: 天道玄机
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/

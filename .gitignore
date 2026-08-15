@@ -30,3 +30,6 @@ Desktop.ini
 *.njsproj
 *.sln
 *.sw?
+
+# Electron build output
+release/

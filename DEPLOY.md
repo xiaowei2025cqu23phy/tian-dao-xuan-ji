@@ -1,6 +1,6 @@
 # 部署指南（免费方案）
 
-「天道玄机」是纯前端静态站点（Vite 构建），**构建产物在 `dist/`**，可部署到任何静态托管服务。
+「天道玄机」是纯前端静态站点（Vite 构建），**构建产物在 `dist/`**，可部署到任何静态托管服务，也可打包为桌面应用。
 
 > ⚠️ 重要：`dist/` 在 `.gitignore` 中（不进源码仓库），因此部署前必须先在本地构建：
 > ```bash
@@ -8,6 +8,16 @@
 > npm run build        # 产物生成到 dist/
 > ```
 > 生产构建内置密钥防泄露守卫：若检测到真实 `GEMINI_API_KEY` 会直接报错终止。
+
+---
+
+## 零、PWA：把网页安装为桌面应用（零依赖）
+
+项目已内置 PWA 支持（`manifest.webmanifest` + Service Worker）：
+
+1. 部署到任意 HTTPS 站点（如 Gitee Pages / GitHub Pages）。
+2. 用 **Chrome / Edge** 打开站点 → 地址栏右侧「安装」图标（或在菜单中选「安装应用」/「添加到桌面」）。
+3. 桌面即出现独立窗口的应用图标，**离线可用**（Service Worker 已缓存全部静态资源）。
 
 ---
 
@@ -69,7 +79,33 @@ npm run deploy        # = gh-pages -d dist，推送到 GitHub 的 gh-pages 分�
 
 ---
 
-## 五、双平台同步小抄
+## 五、桌面端（Electron）
+
+项目内置 Electron 支持，可将「天道玄机」打包为独立 Windows 程序：
+
+```bash
+# 1. 安装依赖（如网络慢，npm 会自动使用 npmmirror 镜像下载 Electron）
+npm install
+
+# 2. 本地直接运行桌面版（先构建再启动）
+npm run desktop
+
+# 3. 打包为绿色目录（免安装，直接运行 release/win-unpacked/天道玄机.exe）
+npm run desktop:pack
+
+# 4. 打包为 Windows 安装程序（release/天道玄机 Setup x.x.x.exe）
+npm run desktop:build
+```
+
+说明：
+- 桌面版与网页版共用同一套 `dist/` 产物，功能完全一致。
+- 打包配置见 `electron-builder.yml`（应用名、图标、安装选项）。
+- 图标可在 `public/icons/` 与 `build/icon.png` 找到（由 `npm run icons` 自动生成）。
+- API 密钥仍通过页面右上角【设置】配置（仅存本地），不会写入安装包。
+
+---
+
+## 六、双平台同步小抄
 
 ```bash
 # 源码推送到两个平台
